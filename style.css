@@ -1,0 +1,260 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #6c3df5;
+    --primary-dark: #5128c7;
+    --background: #f5f5fa;
+    --white: #ffffff;
+    --text: #222222;
+    --subtext: #777777;
+    --border: #e5e5e5;
+    --success: #22a06b;
+    --danger: #e5484d;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+#app {
+    width: 100%;
+    min-height: 100vh;
+}
+
+.tela {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 35px 25px;
+    background: var(--white);
+}
+
+.escondida {
+    display: none;
+}
+
+/* LOGO */
+
+.logo {
+    text-align: center;
+    color: var(--primary);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 45px;
+}
+
+/* TEXTOS */
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.subtitulo {
+    color: var(--subtext);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.pequeno {
+    color: var(--subtext);
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+/* CAMPOS */
+
+.campo {
+    margin-bottom: 18px;
+}
+
+.campo label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.campo input {
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.campo input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 61, 245, 0.1);
+}
+
+/* BOTÃO PRINCIPAL */
+
+.botao-principal {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.botao-principal:hover {
+    background: var(--primary-dark);
+}
+
+.botao-principal:active {
+    transform: scale(0.98);
+}
+
+/* MENSAGENS */
+
+.mensagem {
+    min-height: 20px;
+    margin-top: 15px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--danger);
+}
+
+/* CÂMERA */
+
+.camera-area {
+    width: 100%;
+    height: 300px;
+    border-radius: 18px;
+    background: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+#camera {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+/* TELA PRINCIPAL */
+
+.topo {
+    margin-bottom: 30px;
+}
+
+.status-card {
+    background: #f8f7ff;
+    border: 1px solid #e9e5ff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.registro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid #e8e5ef;
+}
+
+.registro span {
+    color: var(--subtext);
+    font-size: 14px;
+}
+
+.registro strong {
+    font-size: 13px;
+}
+
+.acoes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.botao-acao {
+    width: 100%;
+    min-height: 58px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.botao-acao.entrada {
+    background: var(--success);
+}
+
+.botao-acao.saida {
+    background: var(--primary);
+}
+
+.botao-acao:active {
+    transform: scale(0.98);
+}
+
+.ultimo-registro {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.ultimo-registro p {
+    color: var(--subtext);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.botao-secundario {
+    width: 100%;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: white;
+    color: var(--text);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* DESKTOP */
+
+@media (min-width: 481px) {
+    body {
+        display: flex;
+        justify-content: center;
+    }
+
+    .tela {
+        min-height: 100vh;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.06);
+    }
+}

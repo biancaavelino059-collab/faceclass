@@ -705,61 +705,176 @@ document
             new Date();
 
         const hora =
-            String(agora.getHours()).padStart(2, "0");
+            agora.getHours();
 
         const minuto =
-            String(agora.getMinutes()).padStart(2, "0");
-
-        const horarioAtual =
-            `${hora}:${minuto}`;
-
-
-        mensagem.style.color =
-            "#777777";
-
-        mensagem.textContent =
-            "Verificando sua localização...";
+            agora.getMinutes();
 
 
         // ==========================================
-        // VERIFICAR LOCALIZAÇÃO
+        // SAÍDA ANTES DAS 12:10
         // ==========================================
 
-        verificarLocalizacao((estaNaEscola) => {
+        if (
+            hora < 12 ||
+            (hora === 12 && minuto < 10)
+        ) {
 
-            if (!estaNaEscola) {
+            const campoMotivo =
+                document.getElementById("campo-motivo-saida");
 
-                mensagem.style.color =
-                    "#e5484d";
-
-                mensagem.textContent =
-                    "Você precisa estar na escola para registrar sua saída.";
-
-                return;
-            }
-
-
-            // Localização aprovada
-
-            aluno.saida =
-                horarioAtual;
-
-            salvarAlunoAtual();
+            campoMotivo.classList.remove("escondida");
 
 
             mensagem.style.color =
-                "#22a06b";
+                "#e5484d";
 
             mensagem.textContent =
-                `Saída registrada às ${horarioAtual}.`;
+                "A saída antes das 12:10 exige um motivo.";
+
+            return;
+        }
 
 
-            atualizarStatus();
+        // ==========================================
+        // SAÍDA NORMAL A PARTIR DAS 12:10
+        // ==========================================
 
-        });
+        registrarSaida();
 
     });
 
+
+// ==========================================
+// CONFIRMAR SAÍDA ANTECIPADA
+// ==========================================
+
+document
+    .getElementById("btn-confirmar-saida")
+    .addEventListener("click", () => {
+
+        const motivo =
+            document
+                .getElementById("motivo-saida")
+                .value
+                .trim();
+
+        const mensagem =
+            document.getElementById("mensagem-principal");
+
+
+        // Verificar se o motivo foi preenchido
+
+        if (!motivo) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Digite o motivo da saída antecipada.";
+
+            return;
+        }
+
+
+        // Registrar saída com motivo
+
+        registrarSaida(motivo);
+
+    });
+
+
+// ==========================================
+// FUNÇÃO PARA REGISTRAR SAÍDA
+// ==========================================
+
+function registrarSaida(motivo = "") {
+
+    const mensagem =
+        document.getElementById("mensagem-principal");
+
+
+    // Horário atual
+
+    const agora =
+        new Date();
+
+    const hora =
+        String(agora.getHours()).padStart(2, "0");
+
+    const minuto =
+        String(agora.getMinutes()).padStart(2, "0");
+
+    const horarioAtual =
+        `${hora}:${minuto}`;
+
+
+    // ==========================================
+    // VERIFICAR LOCALIZAÇÃO
+    // ==========================================
+
+    mensagem.style.color =
+        "#777777";
+
+    mensagem.textContent =
+        "Verificando sua localização...";
+
+
+    verificarLocalizacao((estaNaEscola) => {
+
+        if (!estaNaEscola) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Você precisa estar na escola para registrar sua saída.";
+
+            return;
+        }
+
+
+        // ==========================================
+        // REGISTRAR SAÍDA
+        // ==========================================
+
+        aluno.saida =
+            horarioAtual;
+
+        aluno.motivoSaida =
+            motivo;
+
+
+        salvarAlunoAtual();
+
+
+        // Esconder campo do motivo
+
+        document
+            .getElementById("campo-motivo-saida")
+            .classList
+            .add("escondida");
+
+
+        // Limpar motivo
+
+        document
+            .getElementById("motivo-saida")
+            .value = "";
+
+
+        mensagem.style.color =
+            "#22a06b";
+
+        mensagem.textContent =
+            `Saída registrada às ${horarioAtual}.`;
+
+
+        atualizarStatus();
+
+    });
+
+}
 
 // ==========================================
 // SAIR DA CONTA

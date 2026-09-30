@@ -13,6 +13,10 @@
 
     <main id="app">
 
+        <!-- ========================================== -->
+        <!-- TELA DE LOGIN -->
+        <!-- ========================================== -->
+
         <section id="tela-login" class="tela">
 
             <div class="logo">
@@ -25,17 +29,27 @@
                 Entre para registrar sua entrada e saída da escola.
             </p>
 
+
             <div class="campo">
+<<<<<<< HEAD:index.html
+                <label for="login-ra">RA + dígito</label>
+
+=======
                 <label for="login-ra">RA + Dígito</label>
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
                 <input
                     type="text"
                     id="login-ra"
-                    placeholder="Digite seu RA"
+                    placeholder="0000000000000-0"
+                    maxlength="15"
+                    inputmode="numeric"
                 >
             </div>
 
+
             <div class="campo">
                 <label for="login-senha">Senha</label>
+
                 <input
                     type="password"
                     id="login-senha"
@@ -43,11 +57,18 @@
                 >
             </div>
 
-            <button id="btn-login" class="botao-principal">
+
+            <button
+                id="btn-login"
+                class="botao-principal"
+            >
                 Entrar
             </button>
 
-            <p id="mensagem-login" class="mensagem"></p>
+            <p
+                id="mensagem-login"
+                class="mensagem"
+            ></p>
 
 
             <!-- ADICIONE ESTE BOTÃO DE ATALHO -->
@@ -61,7 +82,14 @@
         </section>
 
 
-        <section id="tela-cadastro" class="tela escondida">
+        <!-- ========================================== -->
+        <!-- TELA DE CADASTRO -->
+        <!-- ========================================== -->
+
+        <section
+            id="tela-cadastro"
+            class="tela escondida"
+        >
 
             <div class="logo">
                 CONTROLE ESCOLAR
@@ -73,8 +101,12 @@
                 Cadastre seus dados para utilizar o sistema.
             </p>
 
+
             <div class="campo">
-                <label for="cadastro-nome">Nome completo</label>
+                <label for="cadastro-nome">
+                    Nome completo
+                </label>
+
                 <input
                     type="text"
                     id="cadastro-nome"
@@ -82,8 +114,12 @@
                 >
             </div>
 
+
             <div class="campo">
-                <label for="cadastro-email">E-mail</label>
+                <label for="cadastro-email">
+                    E-mail
+                </label>
+
                 <input
                     type="email"
                     id="cadastro-email"
@@ -91,17 +127,31 @@
                 >
             </div>
 
+
             <div class="campo">
+<<<<<<< HEAD:index.html
+                <label for="cadastro-ra">
+                    RA + dígito
+                </label>
+
+=======
                 <label for="cadastro-ra">RA + Dígito</label>
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
                 <input
                     type="text"
                     id="cadastro-ra"
-                    placeholder="Digite seu RA"
+                    placeholder="0000000000000-0"
+                    maxlength="15"
+                    inputmode="numeric"
                 >
             </div>
 
+
             <div class="campo">
-                <label for="cadastro-senha">Nova senha</label>
+                <label for="cadastro-senha">
+                    Nova senha
+                </label>
+
                 <input
                     type="password"
                     id="cadastro-senha"
@@ -112,8 +162,12 @@
 
             <h2>Responsável</h2>
 
+
             <div class="campo">
-                <label for="responsavel-nome">Nome do responsável</label>
+                <label for="responsavel-nome">
+                    Nome do responsável
+                </label>
+
                 <input
                     type="text"
                     id="responsavel-nome"
@@ -121,17 +175,27 @@
                 >
             </div>
 
+
             <div class="campo">
-                <label for="responsavel-telefone">Telefone</label>
+                <label for="responsavel-telefone">
+                    Telefone
+                </label>
+
                 <input
                     type="tel"
                     id="responsavel-telefone"
-                    placeholder="(00) 00000-0000"
+                    placeholder="(11) 9 11111111"
+                    maxlength="16"
+                    inputmode="numeric"
                 >
             </div>
 
+
             <div class="campo">
-                <label for="responsavel-email">E-mail</label>
+                <label for="responsavel-email">
+                    E-mail
+                </label>
+
                 <input
                     type="email"
                     id="responsavel-email"
@@ -140,16 +204,30 @@
             </div>
 
 
-            <button id="btn-cadastrar" class="botao-principal">
+            <button
+                id="btn-cadastrar"
+                class="botao-principal"
+            >
                 Continuar para cadastro facial
             </button>
 
-            <p id="mensagem-cadastro" class="mensagem"></p>
+
+            <p
+                id="mensagem-cadastro"
+                class="mensagem"
+            ></p>
 
         </section>
 
 
-        <section id="tela-facial" class="tela escondida">
+        <!-- ========================================== -->
+        <!-- TELA DE CADASTRO FACIAL -->
+        <!-- ========================================== -->
+
+        <section
+            id="tela-facial"
+            class="tela escondida"
+        >
 
             <div class="logo">
                 CONTROLE ESCOLAR
@@ -161,54 +239,102 @@
                 Agora precisamos cadastrar seu rosto.
             </p>
 
-          <div class="camera-area">
-          <video id="camera" autoplay playsinline></video>
-          </div>
+
+            <div class="camera-area">
+                <video
+                    id="camera"
+                    autoplay
+                    playsinline
+                ></video>
+            </div>
+
 
             <p>
                 Posicione seu rosto dentro da área indicada.
             </p>
 
-            <button id="btn-cadastrar-facial" class="botao-principal">
+
+            <button
+                id="btn-cadastrar-facial"
+                class="botao-principal"
+            >
                 Cadastrar meu rosto
             </button>
+
+
             <canvas id="canvas-rosto"></canvas>
 
-            <p id="mensagem-facial" class="mensagem"></p>
+
+            <p
+                id="mensagem-facial"
+                class="mensagem"
+            ></p>
 
         </section>
 
 
-        <section id="tela-principal" class="tela escondida">
+        <!-- ========================================== -->
+        <!-- TELA PRINCIPAL -->
+        <!-- ========================================== -->
+
+        <section
+            id="tela-principal"
+            class="tela escondida"
+        >
 
             <div class="topo">
+
                 <div>
-                    <p class="pequeno">Olá,</p>
-                    <h1 id="nome-aluno">Aluno</h1>
+
+                    <p class="pequeno">
+                        Olá,
+                    </p>
+
+                    <h1 id="nome-aluno">
+                        Aluno
+                    </h1>
+
                 </div>
+
             </div>
 
+
+            <!-- STATUS -->
 
             <div class="status-card">
 
                 <h2>Status de hoje</h2>
 
+
                 <div class="registro">
-                    <span>Entrada</span>
+
+                    <span>
+                        Entrada
+                    </span>
+
                     <strong id="status-entrada">
                         Ainda não registrada
                     </strong>
+
                 </div>
 
+
                 <div class="registro">
-                    <span>Saída</span>
+
+                    <span>
+                        Saída
+                    </span>
+
                     <strong id="status-saida">
                         Ainda não registrada
                     </strong>
+
                 </div>
 
             </div>
 
+
+            <!-- AÇÕES -->
 
             <div class="acoes">
 
@@ -218,6 +344,7 @@
                 >
                     📍 Registrar entrada
                 </button>
+
 
                 <button
                     id="btn-saida"
@@ -229,9 +356,51 @@
             </div>
 
 
+            <!-- MOTIVO DA SAÍDA ANTECIPADA -->
+
+            <div
+                id="campo-motivo-saida"
+                class="escondida"
+            >
+
+                <div class="campo">
+
+                    <label for="motivo-saida">
+                        Motivo da saída antecipada
+                    </label>
+
+
+                    <textarea
+                        id="motivo-saida"
+                        placeholder="Digite o motivo da saída..."
+                        rows="3"
+                    ></textarea>
+
+                </div>
+
+
+                <button
+                    id="btn-confirmar-saida"
+                    class="botao-principal"
+                >
+                    Confirmar saída
+                </button>
+
+            </div>
+
+
+            <!-- ÚLTIMO REGISTRO -->
+
             <div class="ultimo-registro">
 
+<<<<<<< HEAD:index.html
+                <h2>
+                    Último registro
+                </h2>
+
+=======
                 <h2>Histórico de registros</h2>
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
 
                 <div id="lista-historico">
                     <p>Nenhum registro realizado.</p>
@@ -239,15 +408,26 @@
 
             </div>
 
-            <button id="btn-sair" class="botao-secundario">
+
+            <!-- SAIR -->
+
+            <button
+                id="btn-sair"
+                class="botao-secundario"
+            >
                 Sair
             </button>
 
-            <p id="mensagem-principal" class="mensagem"></p>
+
+            <p
+                id="mensagem-principal"
+                class="mensagem"
+            ></p>
 
         </section>
 
     </main>
+
 
     <script src="script.js"></script>
 

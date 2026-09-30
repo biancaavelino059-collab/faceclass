@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,12 +32,11 @@
 
 
             <div class="campo">
-<<<<<<< HEAD:index.html
-                <label for="login-ra">RA + dígito</label>
 
-=======
-                <label for="login-ra">RA + Dígito</label>
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
+                <label for="login-ra">
+                    RA + dígito
+                </label>
+
                 <input
                     type="text"
                     id="login-ra"
@@ -44,17 +44,22 @@
                     maxlength="15"
                     inputmode="numeric"
                 >
+
             </div>
 
 
             <div class="campo">
-                <label for="login-senha">Senha</label>
+
+                <label for="login-senha">
+                    Senha
+                </label>
 
                 <input
                     type="password"
                     id="login-senha"
                     placeholder="Digite sua senha"
                 >
+
             </div>
 
 
@@ -65,19 +70,22 @@
                 Entrar
             </button>
 
+
+            <!-- Botão de teste -->
+
+            <button
+                id="btn-teste"
+                class="botao-secundario"
+                style="margin-top: 10px; background-color: #f0f0f0;"
+            >
+                ⚡ Entrar como Aluno Teste
+            </button>
+
+
             <p
                 id="mensagem-login"
                 class="mensagem"
             ></p>
-
-
-            <!-- ADICIONE ESTE BOTÃO DE ATALHO -->
-            <button id="btn-teste" class="botao-secundario" style="margin-top: 10px; background-color: #f0f0f0;">
-                ⚡ Entrar como Aluno Teste
-            </button>
-
-            <p id="mensagem-login" class="mensagem"></p>
-            
 
         </section>
 
@@ -103,6 +111,7 @@
 
 
             <div class="campo">
+
                 <label for="cadastro-nome">
                     Nome completo
                 </label>
@@ -112,10 +121,12 @@
                     id="cadastro-nome"
                     placeholder="Digite seu nome"
                 >
+
             </div>
 
 
             <div class="campo">
+
                 <label for="cadastro-email">
                     E-mail
                 </label>
@@ -125,18 +136,16 @@
                     id="cadastro-email"
                     placeholder="Digite seu e-mail"
                 >
+
             </div>
 
 
             <div class="campo">
-<<<<<<< HEAD:index.html
+
                 <label for="cadastro-ra">
                     RA + dígito
                 </label>
 
-=======
-                <label for="cadastro-ra">RA + Dígito</label>
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
                 <input
                     type="text"
                     id="cadastro-ra"
@@ -144,10 +153,12 @@
                     maxlength="15"
                     inputmode="numeric"
                 >
+
             </div>
 
 
             <div class="campo">
+
                 <label for="cadastro-senha">
                     Nova senha
                 </label>
@@ -157,13 +168,17 @@
                     id="cadastro-senha"
                     placeholder="Crie uma senha"
                 >
+
             </div>
 
 
-            <h2>Responsável</h2>
+            <h2>
+                Responsável
+            </h2>
 
 
             <div class="campo">
+
                 <label for="responsavel-nome">
                     Nome do responsável
                 </label>
@@ -173,10 +188,12 @@
                     id="responsavel-nome"
                     placeholder="Nome completo"
                 >
+
             </div>
 
 
             <div class="campo">
+
                 <label for="responsavel-telefone">
                     Telefone
                 </label>
@@ -184,14 +201,16 @@
                 <input
                     type="tel"
                     id="responsavel-telefone"
-                    placeholder="(11) 9 11111111"
+                    placeholder="(11) 9 1234-5678"
                     maxlength="16"
                     inputmode="numeric"
                 >
+
             </div>
 
 
             <div class="campo">
+
                 <label for="responsavel-email">
                     E-mail
                 </label>
@@ -201,6 +220,7 @@
                     id="responsavel-email"
                     placeholder="E-mail do responsável"
                 >
+
             </div>
 
 
@@ -233,7 +253,9 @@
                 CONTROLE ESCOLAR
             </div>
 
-            <h1>Cadastro facial</h1>
+            <h1>
+                Cadastro facial
+            </h1>
 
             <p class="subtitulo">
                 Agora precisamos cadastrar seu rosto.
@@ -241,11 +263,13 @@
 
 
             <div class="camera-area">
+
                 <video
                     id="camera"
                     autoplay
                     playsinline
                 ></video>
+
             </div>
 
 
@@ -303,7 +327,9 @@
 
             <div class="status-card">
 
-                <h2>Status de hoje</h2>
+                <h2>
+                    Status de hoje
+                </h2>
 
 
                 <div class="registro">
@@ -389,22 +415,18 @@
             </div>
 
 
-            <!-- ÚLTIMO REGISTRO -->
+            <!-- HISTÓRICO / ÚLTIMO REGISTRO -->
 
             <div class="ultimo-registro">
 
-<<<<<<< HEAD:index.html
                 <h2>
                     Último registro
                 </h2>
 
-=======
-                <h2>Histórico de registros</h2>
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/index.html
 
-                <div id="lista-historico">
-                    <p>Nenhum registro realizado.</p>
-                </div>
+                <p id="ultimo-registro">
+                    Nenhum registro realizado.
+                </p>
 
             </div>
 
@@ -432,4 +454,5 @@
     <script src="script.js"></script>
 
 </body>
+
 </html>

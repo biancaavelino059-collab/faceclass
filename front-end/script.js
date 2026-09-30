@@ -2,82 +2,39 @@
 // DADOS DOS ALUNOS
 // ==========================================
 
-let alunos =
-    JSON.parse(localStorage.getItem("alunos")) || [];
+let alunos = JSON.parse(localStorage.getItem("alunos")) || [];
 
-
-// Recupera o aluno que está logado
-
-let aluno =
-    JSON.parse(localStorage.getItem("alunoAtual")) || {
-
+let aluno = JSON.parse(localStorage.getItem("alunoAtual")) || {
+    nome: "",
+    email: "",
+    ra: "",
+    senha: "",
+    rostoCadastrado: false,
+    rostoImagem: "",
+    responsavel: {
         nome: "",
-        email: "",
-        ra: "",
-        senha: "",
-
-<<<<<<< HEAD:script.js
-        rostoCadastrado: false,
-        rostoImagem: "",
-
-        responsavel: {
-            nome: "",
-            telefone: "",
-            email: ""
-        },
-
-        entrada: null,
-        saida: null,
-        motivoSaida: ""
-    };
-=======
+        telefone: "",
+        email: ""
+    },
     entrada: null,
     saida: null,
+    motivoSaida: "",
     historico: []
 };
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
-
-// ==========================================
-// SALVAR ALUNOS
-// ==========================================
 
 function salvarAlunos() {
-
-    localStorage.setItem(
-        "alunos",
-        JSON.stringify(alunos)
-    );
-
+    localStorage.setItem("alunos", JSON.stringify(alunos));
 }
 
-
-// ==========================================
-// SALVAR ALUNO ATUAL
-// ==========================================
-
 function salvarAlunoAtual() {
+    localStorage.setItem("alunoAtual", JSON.stringify(aluno));
 
-    localStorage.setItem(
-        "alunoAtual",
-        JSON.stringify(aluno)
-    );
-
-
-    const indice =
-        alunos.findIndex(
-            a => a.ra === aluno.ra
-        );
-
+    const indice = alunos.findIndex(a => a.ra === aluno.ra);
 
     if (indice !== -1) {
-
         alunos[indice] = aluno;
-
         salvarAlunos();
-
     }
-
 }
 
 
@@ -85,26 +42,27 @@ function salvarAlunoAtual() {
 // IMPORTAR CADASTRO ANTIGO
 // ==========================================
 
-const alunoAntigo =
-    JSON.parse(localStorage.getItem("aluno"));
-
+const alunoAntigo = JSON.parse(localStorage.getItem("aluno"));
 
 if (alunoAntigo && alunoAntigo.ra) {
 
-    const jaExiste =
-        alunos.some(
-            a => a.ra === alunoAntigo.ra
-        );
-
+    const jaExiste = alunos.some(
+        a => a.ra === alunoAntigo.ra
+    );
 
     if (!jaExiste) {
 
+        if (!alunoAntigo.historico) {
+            alunoAntigo.historico = [];
+        }
+
+        if (alunoAntigo.motivoSaida === undefined) {
+            alunoAntigo.motivoSaida = "";
+        }
+
         alunos.push(alunoAntigo);
-
         salvarAlunos();
-
     }
-
 }
 
 
@@ -126,22 +84,17 @@ const telaPrincipal =
 
 
 // ==========================================
-// FUNÇÃO PARA TROCAR DE TELA
+// TROCAR DE TELA
 // ==========================================
 
 function mostrarTela(tela) {
 
     telaLogin.classList.add("escondida");
-
     telaCadastro.classList.add("escondida");
-
     telaFacial.classList.add("escondida");
-
     telaPrincipal.classList.add("escondida");
 
-
     tela.classList.remove("escondida");
-
 }
 
 
@@ -154,14 +107,8 @@ function formatarRA(valor) {
     let numeros =
         valor.replace(/\D/g, "");
 
-
-    // Máximo de 14 números
-
     numeros =
         numeros.slice(0, 14);
-
-
-    // Coloca o hífen antes do dígito
 
     if (numeros.length > 13) {
 
@@ -170,70 +117,83 @@ function formatarRA(valor) {
             "-" +
             numeros.slice(13)
         );
-
     }
 
-
     return numeros;
-
 }
 
 
-// ==========================================
-// RA DO LOGIN
-// ==========================================
+const loginRa =
+    document.getElementById("login-ra");
 
-document
-    .getElementById("login-ra")
-    .addEventListener("input", function () {
-
-        this.value =
-            formatarRA(this.value);
-
-    });
+const cadastroRa =
+    document.getElementById("cadastro-ra");
 
 
-// ==========================================
-// RA DO CADASTRO
-// ==========================================
+loginRa.addEventListener("input", function () {
 
-document
-    .getElementById("cadastro-ra")
-    .addEventListener("input", function () {
+    this.value =
+        formatarRA(this.value);
 
-        this.value =
-            formatarRA(this.value);
+});
 
-    });
+
+cadastroRa.addEventListener("input", function () {
+
+    this.value =
+        formatarRA(this.value);
+
+});
 
 
 // ==========================================
 // FORMATAR TELEFONE
+// Formato: (11) 9 1234-5678
 // ==========================================
 
-const telefone = document.getElementById("responsavel-telefone");
+const telefone =
+    document.getElementById("responsavel-telefone");
+
 
 telefone.addEventListener("input", () => {
-    let numero = telefone.value.replace(/\D/g, "");
 
-    numero = numero.slice(0, 11);
+    let numero =
+        telefone.value.replace(/\D/g, "");
+
+    numero =
+        numero.slice(0, 11);
+
 
     if (numero.length <= 2) {
-        telefone.value = numero.length > 0 ? `(${numero}` : "";
+
+        telefone.value =
+            numero ? `(${numero}` : "";
+
         return;
     }
+
 
     if (numero.length <= 3) {
-        telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2)}`;
+
+        telefone.value =
+            `(${numero.slice(0, 2)}) ${numero.slice(2)}`;
+
         return;
     }
+
 
     if (numero.length <= 7) {
-        telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3)}`;
+
+        telefone.value =
+            `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3)}`;
+
         return;
     }
 
-    telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3, 7)}-${numero.slice(7)}`;
+
+    telefone.value =
+        `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3, 7)}-${numero.slice(7)}`;
+
 });
 
 
@@ -243,359 +203,239 @@ telefone.addEventListener("input", () => {
 
 document
     .getElementById("btn-login")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const raFormatado =
-                document
-                    .getElementById("login-ra")
-                    .value
-                    .trim();
+        const raFormatado =
+            loginRa.value.trim();
 
+        const senha =
+            document
+                .getElementById("login-senha")
+                .value
+                .trim();
 
-            const senha =
-                document
-                    .getElementById("login-senha")
-                    .value
-                    .trim();
+        const mensagem =
+            document
+                .getElementById("mensagem-login");
 
 
-            const mensagem =
-                document
-                    .getElementById("mensagem-login");
+        const ra =
+            raFormatado.replace("-", "");
 
 
-            // Retirar o hífen
-
-            const ra =
-                raFormatado.replace(
-                    "-",
-                    ""
-                );
+        const formatoRA =
+            /^0000[0-9]{9}[a-zA-Z0-9]$/;
 
 
-            const formatoRA =
-                /^0000[0-9]{9}[a-zA-Z0-9]$/;
+        if (!raFormatado || !senha) {
+
+            mensagem.textContent =
+                "Preencha o RA + dígito e a senha.";
+
+            return;
+        }
 
 
-            // ==========================================
-            // CAMPOS VAZIOS
-            // ==========================================
+        if (!formatoRA.test(ra)) {
 
-            if (!raFormatado || !senha) {
+            mensagem.textContent =
+                "Digite um RA válido no formato 0000000000000-0.";
+
+            return;
+        }
+
+
+        const alunoEncontrado =
+            alunos.find(
+                a => a.ra === ra
+            );
+
+
+        // ==========================================
+        // PRIMEIRO ACESSO
+        // ==========================================
+
+        if (!alunoEncontrado) {
+
+            localStorage.removeItem(
+                "alunoAtual"
+            );
+
+
+            const ultimosQuatro =
+                ra.slice(-4);
+
+
+            if (senha !== ultimosQuatro) {
 
                 mensagem.textContent =
-                    "Preencha o RA + dígito e a senha.";
+                    "No primeiro acesso, a senha deve ser os 4 últimos dígitos do RA.";
 
                 return;
-
             }
 
 
-            // ==========================================
-            // VALIDAR RA
-            // ==========================================
+            aluno = {
 
-            if (
-                !formatoRA.test(ra)
-            ) {
+                nome: "",
+                email: "",
+                ra: ra,
+                senha: "",
 
-                mensagem.textContent =
-                    "Digite um RA válido no formato 0000000000000-0.";
+                rostoCadastrado: false,
+                rostoImagem: "",
 
-                return;
-
-            }
-
-
-            // ==========================================
-            // PROCURAR ALUNO
-            // ==========================================
-
-            const alunoEncontrado =
-                alunos.find(
-                    a => a.ra === ra
-                );
-
-
-            // ==========================================
-            // PRIMEIRO ACESSO
-            // ==========================================
-
-            if (!alunoEncontrado) {
-
-                localStorage.removeItem(
-                    "alunoAtual"
-                );
-
-
-                const ultimosQuatro =
-                    ra.slice(-4);
-
-
-                if (
-                    senha !== ultimosQuatro
-                ) {
-
-                    mensagem.textContent =
-                        "No primeiro acesso, a senha deve ser os 4 últimos dígitos do RA.";
-
-                    return;
-
-                }
-
-
-                aluno = {
-
+                responsavel: {
                     nome: "",
+                    telefone: "",
+                    email: ""
+                },
 
-                    email: "",
-
-                    ra: ra,
-
-                    senha: "",
-
-                    rostoCadastrado: false,
-
-                    rostoImagem: "",
-
-                    responsavel: {
-
-                        nome: "",
-
-                        telefone: "",
-
-                        email: ""
-
-                    },
-
-                    entrada: null,
-
-                    saida: null,
-
-                    motivoSaida: ""
-
-                };
+                entrada: null,
+                saida: null,
+                motivoSaida: "",
+                historico: []
+            };
 
 
-                mensagem.textContent = "";
-
-
-                // Preencher RA no cadastro
-
-                document
-                    .getElementById("cadastro-ra")
-                    .value =
-                    formatarRA(ra);
-
-
-                mostrarTela(
-                    telaCadastro
-                );
-
-
-                return;
-
-            }
-
-
-            // ==========================================
-            // ALUNO JÁ CADASTRADO
-            // ==========================================
-
-            if (
-                senha !==
-                alunoEncontrado.senha
-            ) {
-
-                mensagem.textContent =
-                    "RA ou senha incorretos.";
-
-                return;
-
-            }
-
-
-            aluno =
-                alunoEncontrado;
-
-
-            salvarAlunoAtual();
+            cadastroRa.value =
+                formatarRA(ra);
 
 
             mensagem.textContent = "";
 
+            mostrarTela(telaCadastro);
 
-            // ==========================================
-            // VERIFICAR ROSTO
-            // ==========================================
-
-            if (
-                !aluno.rostoCadastrado
-            ) {
-
-                mostrarTela(
-                    telaFacial
-                );
-
-                abrirCamera();
-
-                return;
-
-            }
-
-
-            // ==========================================
-            // IR PARA TELA PRINCIPAL
-            // ==========================================
-
-            carregarTelaPrincipal();
-
-
-            mostrarTela(
-                telaPrincipal
-            );
-
-        }
-<<<<<<< HEAD:script.js
-    );
-=======
-
-
-        // Criar novo aluno
-
-        aluno = {
-
-            nome: "",
-            email: "",
-            ra: ra,
-            senha: "",
-
-            rostoCadastrado: false,
-            rostoImagem: "",
-
-            responsavel: {
-                nome: "",
-                telefone: "",
-                email: ""
-            },
-
-            entrada: null,
-            saida: null,
-            historico: []
-        };
-
-
-        mensagem.textContent = "";
-
-        mostrarTela(telaCadastro);
-
-        return;
-    }
-
-
-    // ==========================================
-    // ALUNO JÁ CADASTRADO
-    // ==========================================
-
-    if (senha !== alunoEncontrado.senha) {
-
-        mensagem.textContent =
-            "RA ou senha incorretos.";
-
-        return;
-    }
-
-
-    // Definir aluno atual
-
-    aluno = alunoEncontrado;
-
-    if (!aluno.historico) {
-        aluno.historico = [];
-    }
-
-    salvarAlunoAtual();
-
-    mensagem.textContent = "";
-
-
-    // ==========================================
-    // VERIFICAR ROSTO
-    // ==========================================
-
-    if (!aluno.rostoCadastrado) {
-
-        mostrarTela(telaFacial);
-
-        abrirCamera();
-
-        return;
-    }
-
-
-    // ==========================================
-    // IR PARA TELA PRINCIPAL
-    // ==========================================
-
-    carregarTelaPrincipal();
-
-    mostrarTela(telaPrincipal);
-
-});
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
-
-// ==========================================
-// BOTÃO DE ATALHO PARA TESTES
-// ==========================================
-
-const btnTeste = document.getElementById("btn-teste");
-
-if (btnTeste) {
-    btnTeste.addEventListener("click", () => {
-        const raTeste = "0000123456789A";
-
-        // Procura se o aluno de teste já existe
-        let alunoEncontrado = alunos.find(a => a.ra === raTeste);
-
-        // Se não existir, cria o aluno de teste pronto para uso
-        if (!alunoEncontrado) {
-            alunoEncontrado = {
-                nome: "Aluno de Teste",
-                email: "teste@escola.com",
-                ra: raTeste,
-                senha: "1234",
-                rostoCadastrado: true,
-                rostoImagem: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-                responsavel: {
-                    nome: "Responsavel Teste",
-                    telefone: "11999999999",
-                    email: "responsavel@teste.com"
-                },
-                entrada: null,
-                saida: null,
-                historico: []
-            };
-
-            alunos.push(alunoEncontrado);
-            salvarAlunos();
+            return;
         }
 
-        // Define como aluno atual
-        aluno = alunoEncontrado;
+
+        // ==========================================
+        // ALUNO JÁ CADASTRADO
+        // ==========================================
+
+        if (
+            senha !==
+            alunoEncontrado.senha
+        ) {
+
+            mensagem.textContent =
+                "RA ou senha incorretos.";
+
+            return;
+        }
+
+
+        aluno =
+            alunoEncontrado;
+
 
         if (!aluno.historico) {
             aluno.historico = [];
         }
 
+
+        if (aluno.motivoSaida === undefined) {
+            aluno.motivoSaida = "";
+        }
+
+
         salvarAlunoAtual();
 
-        // Vai direto para a tela principal
+        mensagem.textContent = "";
+
+
+        // ==========================================
+        // VERIFICAR ROSTO
+        // ==========================================
+
+        if (!aluno.rostoCadastrado) {
+
+            mostrarTela(telaFacial);
+
+            abrirCamera();
+
+            return;
+        }
+
+
         carregarTelaPrincipal();
+
         mostrarTela(telaPrincipal);
+
     });
+
+
+// ==========================================
+// BOTÃO DE TESTE
+// ==========================================
+
+const btnTeste =
+    document.getElementById("btn-teste");
+
+
+if (btnTeste) {
+
+    btnTeste.addEventListener("click", () => {
+
+        const raTeste =
+            "0000123456789A";
+
+
+        let alunoEncontrado =
+            alunos.find(
+                a => a.ra === raTeste
+            );
+
+
+        if (!alunoEncontrado) {
+
+            alunoEncontrado = {
+
+                nome: "Aluno de Teste",
+                email: "teste@escola.com",
+                ra: raTeste,
+                senha: "1234",
+
+                rostoCadastrado: true,
+                rostoImagem: "",
+
+                responsavel: {
+                    nome: "Responsavel Teste",
+                    telefone: "11999999999",
+                    email: "responsavel@teste.com"
+                },
+
+                entrada: null,
+                saida: null,
+                motivoSaida: "",
+                historico: []
+            };
+
+
+            alunos.push(alunoEncontrado);
+
+            salvarAlunos();
+        }
+
+
+        if (!alunoEncontrado.historico) {
+            alunoEncontrado.historico = [];
+        }
+
+
+        aluno =
+            alunoEncontrado;
+
+
+        salvarAlunoAtual();
+
+        carregarTelaPrincipal();
+
+        mostrarTela(telaPrincipal);
+
+    });
+
 }
 
 
@@ -605,300 +445,253 @@ if (btnTeste) {
 
 document
     .getElementById("btn-cadastrar")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const nome =
-                document
-                    .getElementById("cadastro-nome")
-                    .value
-                    .trim();
+        const nome =
+            document
+                .getElementById("cadastro-nome")
+                .value
+                .trim();
 
 
-            const email =
-                document
-                    .getElementById("cadastro-email")
-                    .value
-                    .trim();
+        const email =
+            document
+                .getElementById("cadastro-email")
+                .value
+                .trim();
 
 
-            const raFormatado =
-                document
-                    .getElementById("cadastro-ra")
-                    .value
-                    .trim();
+        const raFormatado =
+            cadastroRa.value.trim();
 
 
-            const senha =
-                document
-                    .getElementById("cadastro-senha")
-                    .value
-                    .trim();
+        const senha =
+            document
+                .getElementById("cadastro-senha")
+                .value
+                .trim();
 
 
-            const responsavelNome =
-                document
-                    .getElementById("responsavel-nome")
-                    .value
-                    .trim();
+        const responsavelNome =
+            document
+                .getElementById("responsavel-nome")
+                .value
+                .trim();
 
 
-            const responsavelTelefone =
-                document
-                    .getElementById("responsavel-telefone")
-                    .value
-                    .trim();
+        const responsavelTelefone =
+            document
+                .getElementById("responsavel-telefone")
+                .value
+                .trim();
 
 
-            const responsavelEmail =
-                document
-                    .getElementById("responsavel-email")
-                    .value
-                    .trim();
+        const responsavelEmail =
+            document
+                .getElementById("responsavel-email")
+                .value
+                .trim();
 
 
-            const mensagem =
-                document
-                    .getElementById("mensagem-cadastro");
+        const mensagem =
+            document
+                .getElementById("mensagem-cadastro");
 
 
-            // Retirar o hífen
+        const ra =
+            raFormatado.replace("-", "");
 
-            const ra =
-                raFormatado.replace(
-                    "-",
-                    ""
-                );
 
+        // ==========================================
+        // CAMPOS VAZIOS
+        // ==========================================
 
-            // ==========================================
-            // VERIFICAR CAMPOS VAZIOS
-            // ==========================================
+        if (
+            !nome ||
+            !email ||
+            !raFormatado ||
+            !senha ||
+            !responsavelNome ||
+            !responsavelTelefone ||
+            !responsavelEmail
+        ) {
 
-            if (
-                !nome ||
-                !email ||
-                !raFormatado ||
-                !senha ||
-                !responsavelNome ||
-                !responsavelTelefone ||
-                !responsavelEmail
-            ) {
+            mensagem.textContent =
+                "Preencha todos os campos.";
 
-                mensagem.textContent =
-                    "Preencha todos os campos.";
+            return;
+        }
 
-                return;
 
-            }
+        // ==========================================
+        // NOME
+        // ==========================================
 
+        const formatoNome =
+            /^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/;
 
-            // ==========================================
-            // VALIDAR NOME DO RESPONSÁVEL
-            // ==========================================
 
-            const formatoNomeResponsavel =
-                /^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/;
+        if (!formatoNome.test(nome)) {
 
+            mensagem.textContent =
+                "Digite seu nome completo, usando apenas letras.";
 
-            if (
-                !formatoNomeResponsavel.test(
-                    responsavelNome
-                )
-            ) {
+            return;
+        }
 
-                mensagem.textContent =
-                    "Digite o nome completo do responsável, usando apenas letras.";
 
-                return;
+        if (
+            !formatoNome.test(
+                responsavelNome
+            )
+        ) {
 
-            }
+            mensagem.textContent =
+                "Digite o nome completo do responsável, usando apenas letras.";
 
+            return;
+        }
 
-            // ==========================================
-            // VALIDAR TELEFONE
-            // ==========================================
 
-            const formatoTelefone =
-                /^\(\d{2}\) 9 \d{8}$/;
+        // ==========================================
+        // TELEFONE
+        // ==========================================
 
+        const formatoTelefone =
+            /^\(\d{2}\) 9 \d{4}-\d{4}$/;
 
-            if (
-                !formatoTelefone.test(
-                    responsavelTelefone
-                )
-            ) {
 
-                mensagem.textContent =
-                    "Digite um telefone válido no formato (11) 9 11111111.";
+        if (
+            !formatoTelefone.test(
+                responsavelTelefone
+            )
+        ) {
 
-                return;
+            mensagem.textContent =
+                "Digite um telefone válido no formato (11) 9 1234-5678.";
 
-            }
+            return;
+        }
 
 
-            // ==========================================
-            // VALIDAR E-MAIL
-            // ==========================================
+        // ==========================================
+        // E-MAIL
+        // ==========================================
 
-            const formatoEmail =
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const formatoEmail =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
-            if (
-                !formatoEmail.test(
-                    email
-                )
-            ) {
+        if (
+            !formatoEmail.test(email)
+        ) {
 
-                mensagem.textContent =
-                    "Digite um e-mail válido.";
+            mensagem.textContent =
+                "Digite um e-mail válido.";
 
-                return;
+            return;
+        }
 
-            }
 
+        if (
+            !formatoEmail.test(
+                responsavelEmail
+            )
+        ) {
 
-            if (
-                !formatoEmail.test(
-                    responsavelEmail
-                )
-            ) {
+            mensagem.textContent =
+                "Digite um e-mail válido para o responsável.";
 
-                mensagem.textContent =
-                    "Digite um e-mail válido para o responsável.";
+            return;
+        }
 
-                return;
 
-            }
+        // ==========================================
+        // RA
+        // ==========================================
 
+        const formatoRA =
+            /^0000[0-9]{9}[a-zA-Z0-9]$/;
 
-            // ==========================================
-            // VALIDAR NOME DO ALUNO
-            // ==========================================
 
-            const formatoNome =
-                /^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/;
+        if (
+            !formatoRA.test(ra)
+        ) {
 
+            mensagem.textContent =
+                "Digite um RA válido no formato 0000000000000-0.";
 
-            if (
-                !formatoNome.test(
-                    nome
-                )
-            ) {
+            return;
+        }
 
-                mensagem.textContent =
-                    "Digite seu nome completo, usando apenas letras.";
 
-                return;
+        // ==========================================
+        // SALVAR DADOS
+        // ==========================================
 
-            }
+        aluno.nome =
+            nome;
 
+        aluno.email =
+            email;
 
-            // ==========================================
-            // VALIDAR RA
-            // ==========================================
+        aluno.ra =
+            ra;
 
-            const formatoRA =
-                /^0000[0-9]{9}[a-zA-Z0-9]$/;
+        aluno.senha =
+            senha;
 
 
-            if (
-                !formatoRA.test(
-                    ra
-                )
-            ) {
+        if (!aluno.responsavel) {
+            aluno.responsavel = {};
+        }
 
-                mensagem.textContent =
-                    "Digite um RA válido no formato 0000000000000-0.";
 
-                return;
+        aluno.responsavel.nome =
+            responsavelNome;
 
-            }
+        aluno.responsavel.telefone =
+            responsavelTelefone;
 
+        aluno.responsavel.email =
+            responsavelEmail;
 
-            // ==========================================
-            // SALVAR DADOS DO ALUNO
-            // ==========================================
 
-            aluno.nome =
-                nome;
+        if (!aluno.historico) {
+            aluno.historico = [];
+        }
 
 
-            aluno.email =
-                email;
-
-
-            aluno.ra =
-                ra;
-
-
-            aluno.senha =
-                senha;
-
-
-            aluno.responsavel.nome =
-                responsavelNome;
-
-
-            aluno.responsavel.telefone =
-                responsavelTelefone;
-
-
-            aluno.responsavel.email =
-                responsavelEmail;
-
-
-            // ==========================================
-            // ADICIONAR ALUNO À LISTA
-            // ==========================================
-
-            const alunoJaExiste =
-                alunos.some(
-                    a => a.ra === aluno.ra
-                );
-
-
-            if (!alunoJaExiste) {
-
-                alunos.push(aluno);
-
-            } else {
-
-                const indice =
-                    alunos.findIndex(
-                        a => a.ra === aluno.ra
-                    );
-
-
-                alunos[indice] =
-                    aluno;
-
-            }
-
-
-            salvarAlunos();
-
-            salvarAlunoAtual();
-
-
-            mensagem.textContent = "";
-
-
-            // ==========================================
-            // IR PARA CADASTRO FACIAL
-            // ==========================================
-
-            mostrarTela(
-                telaFacial
+        const indice =
+            alunos.findIndex(
+                a => a.ra === aluno.ra
             );
 
 
-            abrirCamera();
+        if (indice === -1) {
 
+            alunos.push(aluno);
+
+        } else {
+
+            alunos[indice] =
+                aluno;
         }
-    );
+
+
+        salvarAlunos();
+
+        salvarAlunoAtual();
+
+
+        mensagem.textContent = "";
+
+
+        mostrarTela(telaFacial);
+
+        abrirCamera();
+
+    });
 
 
 // ==========================================
@@ -907,132 +700,93 @@ document
 
 document
     .getElementById("btn-cadastrar-facial")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const camera =
-                document.getElementById(
-                    "camera"
-                );
+        const camera =
+            document.getElementById("camera");
 
 
-            const canvas =
-                document.getElementById(
-                    "canvas-rosto"
-                );
+        const canvas =
+            document.getElementById("canvas-rosto");
 
 
-            const mensagem =
-                document.getElementById(
-                    "mensagem-facial"
-                );
+        const mensagem =
+            document.getElementById("mensagem-facial");
 
 
-            // Verificar câmera
-
-            if (!camera.srcObject) {
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "A câmera ainda não foi ativada.";
-
-                return;
-
-            }
-
-
-            // Verificar se a câmera iniciou
-
-            if (
-                camera.readyState < 2
-            ) {
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Aguarde a câmera iniciar.";
-
-                return;
-
-            }
-
-
-            // Definir tamanho do canvas
-
-            canvas.width =
-                camera.videoWidth;
-
-
-            canvas.height =
-                camera.videoHeight;
-
-
-            const contexto =
-                canvas.getContext("2d");
-
-
-            // Capturar imagem
-
-            contexto.drawImage(
-                camera,
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-
-            const imagemRosto =
-                canvas.toDataURL(
-                    "image/jpeg"
-                );
-
-
-            // Salvar rosto
-
-            aluno.rostoCadastrado =
-                true;
-
-
-            aluno.rostoImagem =
-                imagemRosto;
-
-
-            salvarAlunoAtual();
-
+        if (!camera.srcObject) {
 
             mensagem.style.color =
-                "#22a06b";
-
+                "#e5484d";
 
             mensagem.textContent =
-                "Rosto capturado com sucesso!";
+                "A câmera ainda não foi ativada.";
 
-
-            // Ir para tela principal
-
-            setTimeout(
-                () => {
-
-                    carregarTelaPrincipal();
-
-
-                    mostrarTela(
-                        telaPrincipal
-                    );
-
-                },
-                1000
-            );
-
+            return;
         }
-    );
+
+
+        if (camera.readyState < 2) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Aguarde a câmera iniciar.";
+
+            return;
+        }
+
+
+        canvas.width =
+            camera.videoWidth;
+
+
+        canvas.height =
+            camera.videoHeight;
+
+
+        const contexto =
+            canvas.getContext("2d");
+
+
+        contexto.drawImage(
+            camera,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        aluno.rostoCadastrado =
+            true;
+
+
+        aluno.rostoImagem =
+            canvas.toDataURL("image/jpeg");
+
+
+        salvarAlunoAtual();
+
+
+        mensagem.style.color =
+            "#22a06b";
+
+
+        mensagem.textContent =
+            "Rosto capturado com sucesso!";
+
+
+        setTimeout(() => {
+
+            carregarTelaPrincipal();
+
+            mostrarTela(telaPrincipal);
+
+        }, 1000);
+
+    });
 
 
 // ==========================================
@@ -1041,21 +795,14 @@ document
 
 document
     .getElementById("btn-entrada")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const mensagem =
-                document.getElementById(
-                    "mensagem-principal"
-                );
+        const mensagem =
+            document.getElementById(
+                "mensagem-principal"
+            );
 
 
-            // Verificar se já registrou entrada
-
-<<<<<<< HEAD:script.js
-            if (aluno.entrada) {
-=======
         if (aluno.entrada) {
 
             mensagem.style.color =
@@ -1067,8 +814,6 @@ document
             return;
         }
 
-
-        // Verificar rosto
 
         if (!aluno.rostoCadastrado) {
 
@@ -1082,166 +827,88 @@ document
         }
 
 
-        // Horário e Data atual
-
         const agora =
             new Date();
 
+
         const hora =
-            String(agora.getHours()).padStart(2, "0");
+            String(
+                agora.getHours()
+            ).padStart(2, "0");
+
 
         const minuto =
-            String(agora.getMinutes()).padStart(2, "0");
+            String(
+                agora.getMinutes()
+            ).padStart(2, "0");
+
 
         const horarioAtual =
             `${hora}:${minuto}`;
+
 
         const dataAtual =
             agora.toLocaleDateString("pt-BR");
 
 
-        // ==========================================
-        // VERIFICAR LOCALIZAÇÃO
-        // ==========================================
-
         mensagem.style.color =
-            "#777777";
+            "#777";
+
 
         mensagem.textContent =
             "Verificando sua localização...";
 
 
-        verificarLocalizacao((estaNaEscola) => {
+        verificarLocalizacao(
+            (estaNaEscola) => {
 
-            if (!estaNaEscola) {
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Sua entrada já foi registrada hoje.";
-
-                return;
-
-            }
-
-
-            // Verificar rosto
-
-<<<<<<< HEAD:script.js
-            if (
-                !aluno.rostoCadastrado
-            ) {
-=======
-            aluno.entrada = horarioAtual;
-
-            if (!aluno.historico) {
-                aluno.historico = [];
-            }
-
-            // Registra no histórico do aluno
-            aluno.historico.push({
-                tipo: "Entrada",
-                hora: horarioAtual,
-                data: dataAtual
-            });
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Você precisa cadastrar seu rosto primeiro.";
-
-                return;
-
-            }
-
-
-            // Horário atual
-
-            const agora =
-                new Date();
-
-
-            const hora =
-                String(
-                    agora.getHours()
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            const minuto =
-                String(
-                    agora.getMinutes()
-                ).padStart(
-                    2,
-                    "0"
-                );
-
-
-            const horarioAtual =
-                `${hora}:${minuto}`;
-
-
-            // ==========================================
-            // VERIFICAR LOCALIZAÇÃO
-            // ==========================================
-
-            mensagem.style.color =
-                "#777777";
-
-
-            mensagem.textContent =
-                "Verificando sua localização...";
-
-
-            verificarLocalizacao(
-                (estaNaEscola) => {
-
-                    if (!estaNaEscola) {
-
-                        mensagem.style.color =
-                            "#e5484d";
-
-
-                        mensagem.textContent =
-                            "Você precisa estar na escola para registrar sua entrada.";
-
-                        return;
-
-                    }
-
-
-                    // Localização aprovada
-
-                    aluno.entrada =
-                        horarioAtual;
-
-
-                    salvarAlunoAtual();
-
+                if (!estaNaEscola) {
 
                     mensagem.style.color =
-                        "#22a06b";
-
+                        "#e5484d";
 
                     mensagem.textContent =
-                        `Entrada registrada às ${horarioAtual}.`;
+                        "Você precisa estar na escola para registrar sua entrada.";
 
-
-                    atualizarStatus();
-
+                    return;
                 }
-            );
 
-        }
-    );
+
+                aluno.entrada =
+                    horarioAtual;
+
+
+                if (!aluno.historico) {
+                    aluno.historico = [];
+                }
+
+
+                aluno.historico.push({
+
+                    tipo: "Entrada",
+                    hora: horarioAtual,
+                    data: dataAtual
+
+                });
+
+
+                salvarAlunoAtual();
+
+
+                mensagem.style.color =
+                    "#22a06b";
+
+
+                mensagem.textContent =
+                    `Entrada registrada às ${horarioAtual}.`;
+
+
+                atualizarStatus();
+
+            }
+        );
+
+    });
 
 
 // ==========================================
@@ -1250,105 +917,86 @@ document
 
 document
     .getElementById("btn-saida")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const mensagem =
-                document.getElementById(
-                    "mensagem-principal"
-                );
+        const mensagem =
+            document.getElementById(
+                "mensagem-principal"
+            );
 
 
-            // Precisa ter entrada
+        if (!aluno.entrada) {
 
-            if (!aluno.entrada) {
+            mensagem.style.color =
+                "#e5484d";
 
-                mensagem.style.color =
-                    "#e5484d";
+            mensagem.textContent =
+                "Você precisa registrar sua entrada primeiro.";
 
-
-                mensagem.textContent =
-                    "Você precisa registrar sua entrada primeiro.";
-
-                return;
-
-            }
-
-
-            // Verificar se já registrou saída
-
-            if (aluno.saida) {
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Sua saída já foi registrada hoje.";
-
-                return;
-
-            }
-
-
-            // Horário atual
-
-            const agora =
-                new Date();
-
-
-            const hora =
-                agora.getHours();
-
-
-            const minuto =
-                agora.getMinutes();
-
-
-            // ==========================================
-            // SAÍDA ANTES DAS 12:10
-            // ==========================================
-
-            if (
-                hora < 12 ||
-                (
-                    hora === 12 &&
-                    minuto < 10
-                )
-            ) {
-
-                const campoMotivo =
-                    document.getElementById(
-                        "campo-motivo-saida"
-                    );
-
-
-                campoMotivo.classList.remove(
-                    "escondida"
-                );
-
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "A saída antes das 12:10 exige um motivo.";
-
-                return;
-
-            }
-
-
-            // ==========================================
-            // SAÍDA NORMAL A PARTIR DAS 12:10
-            // ==========================================
-
-            registrarSaida();
-
+            return;
         }
-    );
+
+
+        if (aluno.saida) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Sua saída já foi registrada hoje.";
+
+            return;
+        }
+
+
+        const agora =
+            new Date();
+
+
+        const hora =
+            agora.getHours();
+
+
+        const minuto =
+            agora.getMinutes();
+
+
+        // Saída antes das 12:10
+        // exige motivo
+
+        if (
+            hora < 12 ||
+            (
+                hora === 12 &&
+                minuto < 10
+            )
+        ) {
+
+            const campoMotivo =
+                document.getElementById(
+                    "campo-motivo-saida"
+                );
+
+
+            campoMotivo.classList.remove(
+                "escondida"
+            );
+
+
+            mensagem.style.color =
+                "#e5484d";
+
+
+            mensagem.textContent =
+                "A saída antes das 12:10 exige um motivo.";
+
+            return;
+        }
+
+
+        registrarSaida();
+
+    });
 
 
 // ==========================================
@@ -1357,58 +1005,42 @@ document
 
 document
     .getElementById("btn-confirmar-saida")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            const motivo =
-                document
-                    .getElementById(
-                        "motivo-saida"
-                    )
-                    .value
-                    .trim();
+        const motivo =
+            document
+                .getElementById("motivo-saida")
+                .value
+                .trim();
 
 
-            const mensagem =
-                document.getElementById(
-                    "mensagem-principal"
-                );
-
-
-            // Verificar motivo
-
-            if (!motivo) {
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Digite o motivo da saída antecipada.";
-
-                return;
-
-            }
-
-
-            // Registrar saída com motivo
-
-            registrarSaida(
-                motivo
+        const mensagem =
+            document.getElementById(
+                "mensagem-principal"
             );
 
+
+        if (!motivo) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+
+            mensagem.textContent =
+                "Digite o motivo da saída antecipada.";
+
+            return;
         }
-    );
 
 
-<<<<<<< HEAD:script.js
+        registrarSaida(motivo);
+
+    });
+
+
 // ==========================================
-// FUNÇÃO PARA REGISTRAR SAÍDA
+// REGISTRAR SAÍDA
 // ==========================================
-=======
-        // Horário e Data atual
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
 function registrarSaida(
     motivo = ""
@@ -1419,11 +1051,6 @@ function registrarSaida(
             "mensagem-principal"
         );
 
-        const dataAtual =
-            agora.toLocaleDateString("pt-BR");
-
-
-    // Horário atual
 
     const agora =
         new Date();
@@ -1432,31 +1059,25 @@ function registrarSaida(
     const hora =
         String(
             agora.getHours()
-        ).padStart(
-            2,
-            "0"
-        );
+        ).padStart(2, "0");
 
 
     const minuto =
         String(
             agora.getMinutes()
-        ).padStart(
-            2,
-            "0"
-        );
+        ).padStart(2, "0");
 
 
     const horarioAtual =
         `${hora}:${minuto}`;
 
 
-    // ==========================================
-    // VERIFICAR LOCALIZAÇÃO
-    // ==========================================
+    const dataAtual =
+        agora.toLocaleDateString("pt-BR");
+
 
     mensagem.style.color =
-        "#777777";
+        "#777";
 
 
     mensagem.textContent =
@@ -1476,46 +1097,43 @@ function registrarSaida(
                     "Você precisa estar na escola para registrar sua saída.";
 
                 return;
-
             }
 
 
-            // Registrar saída
-
-            aluno.saida = horarioAtual;
-
-            if (!aluno.historico) {
-                aluno.historico = [];
-            }
-
-            // Registra no histórico do aluno
-            aluno.historico.push({
-                tipo: "Saída",
-                hora: horarioAtual,
-                data: dataAtual
-            });
+            aluno.saida =
+                horarioAtual;
 
 
             aluno.motivoSaida =
                 motivo;
 
 
+            if (!aluno.historico) {
+                aluno.historico = [];
+            }
+
+
+            aluno.historico.push({
+
+                tipo: "Saída",
+                hora: horarioAtual,
+                data: dataAtual,
+                motivo: motivo
+
+            });
+
+
             salvarAlunoAtual();
 
-
-            // Esconder campo do motivo
 
             document
                 .getElementById(
                     "campo-motivo-saida"
                 )
-                .classList
-                .add(
+                .classList.add(
                     "escondida"
                 );
 
-
-            // Limpar motivo
 
             document
                 .getElementById(
@@ -1546,61 +1164,55 @@ function registrarSaida(
 
 document
     .getElementById("btn-sair")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            localStorage.removeItem(
-                "alunoAtual"
-            );
+        localStorage.removeItem(
+            "alunoAtual"
+        );
 
 
-            aluno = {
+        aluno = {
 
+            nome: "",
+            email: "",
+            ra: "",
+            senha: "",
+
+            rostoCadastrado: false,
+            rostoImagem: "",
+
+            responsavel: {
                 nome: "",
+                telefone: "",
+                email: ""
+            },
 
-<<<<<<< HEAD:script.js
-                email: "",
-=======
             entrada: null,
             saida: null,
+            motivoSaida: "",
             historico: []
+
         };
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
-                ra: "",
-
-                senha: "",
-
-                rostoCadastrado: false,
-
-                rostoImagem: "",
-
-                responsavel: {
-
-                    nome: "",
-
-                    telefone: "",
-
-                    email: ""
-
-                },
-
-                entrada: null,
-
-                saida: null,
-
-                motivoSaida: ""
-
-            };
 
 
-            mostrarTela(
-                telaLogin
-            );
+        document.getElementById(
+            "login-ra"
+        ).value = "";
 
-        }
-    );
+
+        document.getElementById(
+            "login-senha"
+        ).value = "";
+
+
+        document.getElementById(
+            "mensagem-login"
+        ).textContent = "";
+
+
+        mostrarTela(telaLogin);
+
+    });
 
 
 // ==========================================
@@ -1629,10 +1241,7 @@ async function abrirCamera() {
                 .getUserMedia({
 
                     video: {
-
-                        facingMode:
-                            "user"
-
+                        facingMode: "user"
                     },
 
                     audio: false
@@ -1650,7 +1259,6 @@ async function abrirCamera() {
 
         mensagem.textContent =
             "Câmera ativada. Posicione seu rosto.";
-
 
     } catch (erro) {
 
@@ -1691,7 +1299,7 @@ const ESCOLA = {
 
 
 // ==========================================
-// CALCULAR DISTÂNCIA ATÉ A ESCOLA
+// CALCULAR DISTÂNCIA
 // ==========================================
 
 function calcularDistancia(
@@ -1780,7 +1388,6 @@ function verificarLocalizacao(
         callback(false);
 
         return;
-
     }
 
 
@@ -1800,11 +1407,9 @@ function verificarLocalizacao(
                 calcularDistancia(
 
                     latitude,
-
                     longitude,
 
                     ESCOLA.latitude,
-
                     ESCOLA.longitude
 
                 );
@@ -1875,7 +1480,8 @@ function carregarTelaPrincipal() {
             "nome-aluno"
         )
         .textContent =
-        aluno.nome;
+        aluno.nome ||
+        "Aluno";
 
 
     atualizarStatus();
@@ -1901,17 +1507,8 @@ function atualizarStatus() {
         );
 
 
-<<<<<<< HEAD:script.js
-    const ultimoRegistro =
-        document.getElementById(
-            "ultimo-registro"
-        );
-
-=======
->>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
-
     // ==========================================
-    // STATUS DA ENTRADA
+    // ENTRADA
     // ==========================================
 
     if (aluno.entrada) {
@@ -1928,7 +1525,7 @@ function atualizarStatus() {
 
 
     // ==========================================
-    // STATUS DA SAÍDA
+    // SAÍDA
     // ==========================================
 
     if (aluno.saida) {
@@ -1945,27 +1542,98 @@ function atualizarStatus() {
 
 
     // ==========================================
-    // HISTÓRICO DE REGISTROS (TODOS SALVOS)
+    // ÚLTIMO REGISTRO
     // ==========================================
 
-    const listaHistorico = document.getElementById("lista-historico");
+    const ultimoRegistro =
+        document.getElementById(
+            "ultimo-registro"
+        );
+
+
+    if (ultimoRegistro) {
+
+        if (
+            aluno.historico &&
+            aluno.historico.length > 0
+        ) {
+
+            const ultimo =
+                aluno.historico[
+                    aluno.historico.length - 1
+                ];
+
+
+            ultimoRegistro.textContent =
+                `${ultimo.tipo} registrada em ${ultimo.data} às ${ultimo.hora}`;
+
+        } else {
+
+            ultimoRegistro.textContent =
+                "Nenhum registro realizado.";
+
+        }
+
+    }
+
+
+    // ==========================================
+    // HISTÓRICO COMPLETO
+    // ==========================================
+
+    const listaHistorico =
+        document.getElementById(
+            "lista-historico"
+        );
+
 
     if (listaHistorico) {
-        if (aluno.historico && aluno.historico.length > 0) {
+
+        if (
+            aluno.historico &&
+            aluno.historico.length > 0
+        ) {
+
             listaHistorico.innerHTML = "";
 
-            // Inverte para mostrar o mais recente no topo
-            const historicoInvertido = [...aluno.historico].reverse();
 
-            historicoInvertido.forEach(item => {
-                const p = document.createElement("p");
-                p.style.marginBottom = "8px";
-                p.textContent = `${item.tipo} registrada em ${item.data} às ${item.hora}`;
-                listaHistorico.appendChild(p);
-            });
+            const historicoInvertido =
+                [
+                    ...aluno.historico
+                ].reverse();
+
+
+            historicoInvertido.forEach(
+                item => {
+
+                    const p =
+                        document.createElement(
+                            "p"
+                        );
+
+
+                    p.style.marginBottom =
+                        "8px";
+
+
+                    p.textContent =
+                        `${item.tipo} registrada em ${item.data} às ${item.hora}`;
+
+
+                    listaHistorico.appendChild(
+                        p
+                    );
+
+                }
+            );
+
         } else {
-            listaHistorico.innerHTML = "<p>Nenhum registro realizado.</p>";
+
+            listaHistorico.innerHTML =
+                "<p>Nenhum registro realizado.</p>";
+
         }
+
     }
 
 }

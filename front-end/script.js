@@ -21,7 +21,8 @@ let aluno = JSON.parse(localStorage.getItem("alunoAtual")) || {
     },
 
     entrada: null,
-    saida: null
+    saida: null,
+    historico: []
 };
 
 
@@ -184,7 +185,8 @@ document.getElementById("btn-login").addEventListener("click", () => {
             },
 
             entrada: null,
-            saida: null
+            saida: null,
+            historico: []
         };
 
 
@@ -212,6 +214,10 @@ document.getElementById("btn-login").addEventListener("click", () => {
     // Definir aluno atual
 
     aluno = alunoEncontrado;
+
+    if (!aluno.historico) {
+        aluno.historico = [];
+    }
 
     salvarAlunoAtual();
 
@@ -241,6 +247,58 @@ document.getElementById("btn-login").addEventListener("click", () => {
     mostrarTela(telaPrincipal);
 
 });
+
+
+// ==========================================
+// BOTÃO DE ATALHO PARA TESTES
+// ==========================================
+
+const btnTeste = document.getElementById("btn-teste");
+
+if (btnTeste) {
+    btnTeste.addEventListener("click", () => {
+        const raTeste = "0000123456789A";
+
+        // Procura se o aluno de teste já existe
+        let alunoEncontrado = alunos.find(a => a.ra === raTeste);
+
+        // Se não existir, cria o aluno de teste pronto para uso
+        if (!alunoEncontrado) {
+            alunoEncontrado = {
+                nome: "Aluno de Teste",
+                email: "teste@escola.com",
+                ra: raTeste,
+                senha: "1234",
+                rostoCadastrado: true,
+                rostoImagem: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                responsavel: {
+                    nome: "Responsavel Teste",
+                    telefone: "11999999999",
+                    email: "responsavel@teste.com"
+                },
+                entrada: null,
+                saida: null,
+                historico: []
+            };
+
+            alunos.push(alunoEncontrado);
+            salvarAlunos();
+        }
+
+        // Define como aluno atual
+        aluno = alunoEncontrado;
+
+        if (!aluno.historico) {
+            aluno.historico = [];
+        }
+
+        salvarAlunoAtual();
+
+        // Vai direto para a tela principal
+        carregarTelaPrincipal();
+        mostrarTela(telaPrincipal);
+    });
+}
 
 
 // ==========================================
@@ -597,7 +655,7 @@ document
         }
 
 
-        // Horário atual
+        // Horário e Data atual
 
         const agora =
             new Date();
@@ -610,6 +668,9 @@ document
 
         const horarioAtual =
             `${hora}:${minuto}`;
+
+        const dataAtual =
+            agora.toLocaleDateString("pt-BR");
 
 
         // ==========================================
@@ -639,8 +700,18 @@ document
 
             // Localização aprovada
 
-            aluno.entrada =
-                horarioAtual;
+            aluno.entrada = horarioAtual;
+
+            if (!aluno.historico) {
+                aluno.historico = [];
+            }
+
+            // Registra no histórico do aluno
+            aluno.historico.push({
+                tipo: "Entrada",
+                hora: horarioAtual,
+                data: dataAtual
+            });
 
             salvarAlunoAtual();
 
@@ -699,7 +770,7 @@ document
         }
 
 
-        // Horário atual
+        // Horário e Data atual
 
         const agora =
             new Date();
@@ -712,6 +783,9 @@ document
 
         const horarioAtual =
             `${hora}:${minuto}`;
+
+        const dataAtual =
+            agora.toLocaleDateString("pt-BR");
 
 
         mensagem.style.color =
@@ -741,8 +815,18 @@ document
 
             // Localização aprovada
 
-            aluno.saida =
-                horarioAtual;
+            aluno.saida = horarioAtual;
+
+            if (!aluno.historico) {
+                aluno.historico = [];
+            }
+
+            // Registra no histórico do aluno
+            aluno.historico.push({
+                tipo: "Saída",
+                hora: horarioAtual,
+                data: dataAtual
+            });
 
             salvarAlunoAtual();
 
@@ -787,7 +871,8 @@ document
             },
 
             entrada: null,
-            saida: null
+            saida: null,
+            historico: []
         };
 
         mostrarTela(telaLogin);
@@ -1008,7 +1093,7 @@ function carregarTelaPrincipal() {
 
 
 // ==========================================
-// ATUALIZAR STATUS
+// ATUALIZAR STATUS E HISTÓRICO
 // ==========================================
 
 function atualizarStatus() {
@@ -1018,9 +1103,6 @@ function atualizarStatus() {
 
     const statusSaida =
         document.getElementById("status-saida");
-
-    const ultimoRegistro =
-        document.getElementById("ultimo-registro");
 
 
     // ==========================================
@@ -1058,24 +1140,27 @@ function atualizarStatus() {
 
 
     // ==========================================
-    // ÚLTIMO REGISTRO
+    // HISTÓRICO DE REGISTROS (TODOS SALVOS)
     // ==========================================
 
-    if (aluno.saida) {
+    const listaHistorico = document.getElementById("lista-historico");
 
-        ultimoRegistro.textContent =
-            `Saída registrada às ${aluno.saida}`;
+    if (listaHistorico) {
+        if (aluno.historico && aluno.historico.length > 0) {
+            listaHistorico.innerHTML = "";
 
-    } else if (aluno.entrada) {
+            // Inverte para mostrar o mais recente no topo
+            const historicoInvertido = [...aluno.historico].reverse();
 
-        ultimoRegistro.textContent =
-            `Entrada registrada às ${aluno.entrada}`;
-
-    } else {
-
-        ultimoRegistro.textContent =
-            "Nenhum registro realizado.";
-
+            historicoInvertido.forEach(item => {
+                const p = document.createElement("p");
+                p.style.marginBottom = "8px";
+                p.textContent = `${item.tipo} registrada em ${item.data} às ${item.hora}`;
+                listaHistorico.appendChild(p);
+            });
+        } else {
+            listaHistorico.innerHTML = "<p>Nenhum registro realizado.</p>";
+        }
     }
 
 }

@@ -26,7 +26,7 @@
             </p>
 
             <div class="campo">
-                <label for="login-ra">RA</label>
+                <label for="login-ra">RA + Dígito</label>
                 <input
                     type="text"
                     id="login-ra"
@@ -48,6 +48,15 @@
             </button>
 
             <p id="mensagem-login" class="mensagem"></p>
+
+
+            <!-- ADICIONE ESTE BOTÃO DE ATALHO -->
+            <button id="btn-teste" class="botao-secundario" style="margin-top: 10px; background-color: #f0f0f0;">
+                ⚡ Entrar como Aluno Teste
+            </button>
+
+            <p id="mensagem-login" class="mensagem"></p>
+            
 
         </section>
 
@@ -83,7 +92,7 @@
             </div>
 
             <div class="campo">
-                <label for="cadastro-ra">RA</label>
+                <label for="cadastro-ra">RA + Dígito</label>
                 <input
                     type="text"
                     id="cadastro-ra"
@@ -222,11 +231,11 @@
 
             <div class="ultimo-registro">
 
-                <h2>Último registro</h2>
+                <h2>Histórico de registros</h2>
 
-                <p id="ultimo-registro">
-                    Nenhum registro realizado.
-                </p>
+                <div id="lista-historico">
+                    <p>Nenhum registro realizado.</p>
+                </div>
 
             </div>
 

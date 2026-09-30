@@ -16,6 +16,7 @@ let aluno =
         ra: "",
         senha: "",
 
+<<<<<<< HEAD:script.js
         rostoCadastrado: false,
         rostoImagem: "",
 
@@ -29,6 +30,12 @@ let aluno =
         saida: null,
         motivoSaida: ""
     };
+=======
+    entrada: null,
+    saida: null,
+    historico: []
+};
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
 
 // ==========================================
@@ -451,7 +458,145 @@ document
             );
 
         }
+<<<<<<< HEAD:script.js
     );
+=======
+
+
+        // Criar novo aluno
+
+        aluno = {
+
+            nome: "",
+            email: "",
+            ra: ra,
+            senha: "",
+
+            rostoCadastrado: false,
+            rostoImagem: "",
+
+            responsavel: {
+                nome: "",
+                telefone: "",
+                email: ""
+            },
+
+            entrada: null,
+            saida: null,
+            historico: []
+        };
+
+
+        mensagem.textContent = "";
+
+        mostrarTela(telaCadastro);
+
+        return;
+    }
+
+
+    // ==========================================
+    // ALUNO JÁ CADASTRADO
+    // ==========================================
+
+    if (senha !== alunoEncontrado.senha) {
+
+        mensagem.textContent =
+            "RA ou senha incorretos.";
+
+        return;
+    }
+
+
+    // Definir aluno atual
+
+    aluno = alunoEncontrado;
+
+    if (!aluno.historico) {
+        aluno.historico = [];
+    }
+
+    salvarAlunoAtual();
+
+    mensagem.textContent = "";
+
+
+    // ==========================================
+    // VERIFICAR ROSTO
+    // ==========================================
+
+    if (!aluno.rostoCadastrado) {
+
+        mostrarTela(telaFacial);
+
+        abrirCamera();
+
+        return;
+    }
+
+
+    // ==========================================
+    // IR PARA TELA PRINCIPAL
+    // ==========================================
+
+    carregarTelaPrincipal();
+
+    mostrarTela(telaPrincipal);
+
+});
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
+
+
+// ==========================================
+// BOTÃO DE ATALHO PARA TESTES
+// ==========================================
+
+const btnTeste = document.getElementById("btn-teste");
+
+if (btnTeste) {
+    btnTeste.addEventListener("click", () => {
+        const raTeste = "0000123456789A";
+
+        // Procura se o aluno de teste já existe
+        let alunoEncontrado = alunos.find(a => a.ra === raTeste);
+
+        // Se não existir, cria o aluno de teste pronto para uso
+        if (!alunoEncontrado) {
+            alunoEncontrado = {
+                nome: "Aluno de Teste",
+                email: "teste@escola.com",
+                ra: raTeste,
+                senha: "1234",
+                rostoCadastrado: true,
+                rostoImagem: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                responsavel: {
+                    nome: "Responsavel Teste",
+                    telefone: "11999999999",
+                    email: "responsavel@teste.com"
+                },
+                entrada: null,
+                saida: null,
+                historico: []
+            };
+
+            alunos.push(alunoEncontrado);
+            salvarAlunos();
+        }
+
+        // Define como aluno atual
+        aluno = alunoEncontrado;
+
+        if (!aluno.historico) {
+            aluno.historico = [];
+        }
+
+        salvarAlunoAtual();
+
+        // Vai direto para a tela principal
+        carregarTelaPrincipal();
+        mostrarTela(telaPrincipal);
+    });
+}
 
 
 // ==========================================
@@ -908,7 +1053,68 @@ document
 
             // Verificar se já registrou entrada
 
+<<<<<<< HEAD:script.js
             if (aluno.entrada) {
+=======
+        if (aluno.entrada) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Sua entrada já foi registrada hoje.";
+
+            return;
+        }
+
+
+        // Verificar rosto
+
+        if (!aluno.rostoCadastrado) {
+
+            mensagem.style.color =
+                "#e5484d";
+
+            mensagem.textContent =
+                "Você precisa cadastrar seu rosto primeiro.";
+
+            return;
+        }
+
+
+        // Horário e Data atual
+
+        const agora =
+            new Date();
+
+        const hora =
+            String(agora.getHours()).padStart(2, "0");
+
+        const minuto =
+            String(agora.getMinutes()).padStart(2, "0");
+
+        const horarioAtual =
+            `${hora}:${minuto}`;
+
+        const dataAtual =
+            agora.toLocaleDateString("pt-BR");
+
+
+        // ==========================================
+        // VERIFICAR LOCALIZAÇÃO
+        // ==========================================
+
+        mensagem.style.color =
+            "#777777";
+
+        mensagem.textContent =
+            "Verificando sua localização...";
+
+
+        verificarLocalizacao((estaNaEscola) => {
+
+            if (!estaNaEscola) {
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
                 mensagem.style.color =
                     "#e5484d";
@@ -924,9 +1130,24 @@ document
 
             // Verificar rosto
 
+<<<<<<< HEAD:script.js
             if (
                 !aluno.rostoCadastrado
             ) {
+=======
+            aluno.entrada = horarioAtual;
+
+            if (!aluno.historico) {
+                aluno.historico = [];
+            }
+
+            // Registra no histórico do aluno
+            aluno.historico.push({
+                tipo: "Entrada",
+                hora: horarioAtual,
+                data: dataAtual
+            });
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
                 mensagem.style.color =
                     "#e5484d";
@@ -1181,9 +1402,13 @@ document
     );
 
 
+<<<<<<< HEAD:script.js
 // ==========================================
 // FUNÇÃO PARA REGISTRAR SAÍDA
 // ==========================================
+=======
+        // Horário e Data atual
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
 function registrarSaida(
     motivo = ""
@@ -1193,6 +1418,9 @@ function registrarSaida(
         document.getElementById(
             "mensagem-principal"
         );
+
+        const dataAtual =
+            agora.toLocaleDateString("pt-BR");
 
 
     // Horário atual
@@ -1254,8 +1482,18 @@ function registrarSaida(
 
             // Registrar saída
 
-            aluno.saida =
-                horarioAtual;
+            aluno.saida = horarioAtual;
+
+            if (!aluno.historico) {
+                aluno.historico = [];
+            }
+
+            // Registra no histórico do aluno
+            aluno.historico.push({
+                tipo: "Saída",
+                hora: horarioAtual,
+                data: dataAtual
+            });
 
 
             aluno.motivoSaida =
@@ -1321,7 +1559,14 @@ document
 
                 nome: "",
 
+<<<<<<< HEAD:script.js
                 email: "",
+=======
+            entrada: null,
+            saida: null,
+            historico: []
+        };
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
                 ra: "",
 
@@ -1639,7 +1884,7 @@ function carregarTelaPrincipal() {
 
 
 // ==========================================
-// ATUALIZAR STATUS
+// ATUALIZAR STATUS E HISTÓRICO
 // ==========================================
 
 function atualizarStatus() {
@@ -1656,11 +1901,14 @@ function atualizarStatus() {
         );
 
 
+<<<<<<< HEAD:script.js
     const ultimoRegistro =
         document.getElementById(
             "ultimo-registro"
         );
 
+=======
+>>>>>>> c46ab222ed344831d221b76fdeb84150484ea7c6:front-end/script.js
 
     // ==========================================
     // STATUS DA ENTRADA
@@ -1697,24 +1945,27 @@ function atualizarStatus() {
 
 
     // ==========================================
-    // ÚLTIMO REGISTRO
+    // HISTÓRICO DE REGISTROS (TODOS SALVOS)
     // ==========================================
 
-    if (aluno.saida) {
+    const listaHistorico = document.getElementById("lista-historico");
 
-        ultimoRegistro.textContent =
-            `Saída registrada às ${aluno.saida}`;
+    if (listaHistorico) {
+        if (aluno.historico && aluno.historico.length > 0) {
+            listaHistorico.innerHTML = "";
 
-    } else if (aluno.entrada) {
+            // Inverte para mostrar o mais recente no topo
+            const historicoInvertido = [...aluno.historico].reverse();
 
-        ultimoRegistro.textContent =
-            `Entrada registrada às ${aluno.entrada}`;
-
-    } else {
-
-        ultimoRegistro.textContent =
-            "Nenhum registro realizado.";
-
+            historicoInvertido.forEach(item => {
+                const p = document.createElement("p");
+                p.style.marginBottom = "8px";
+                p.textContent = `${item.tipo} registrada em ${item.data} às ${item.hora}`;
+                listaHistorico.appendChild(p);
+            });
+        } else {
+            listaHistorico.innerHTML = "<p>Nenhum registro realizado.</p>";
+        }
     }
 
 }

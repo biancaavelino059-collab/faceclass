@@ -70,40 +70,5 @@ def cadastrar_aluno():
     }), 201
 
 
-@app.route("/login", methods=["POST"])
-def login():
-
-    dados = request.get_json()
-
-    RA = dados["RA"]
-    senha = dados["senha"]
-
-    conexao = conectar()
-    cursor = conexao.cursor(dictionary=True)
-
-    sql = """
-        SELECT id, nome, RA, email
-        FROM aluno
-        WHERE RA = %s AND senha = %s
-    """
-
-    cursor.execute(sql, (RA, senha))
-
-    aluno = cursor.fetchone()
-
-    cursor.close()
-    conexao.close()
-
-    if aluno:
-        return jsonify({
-            "mensagem": "Login realizado com sucesso!",
-            "aluno": aluno
-        })
-
-    return jsonify({
-        "erro": "RA ou senha incorretos."
-    }), 401
-
-
 if __name__ == "__main__":
     app.run(debug=True)

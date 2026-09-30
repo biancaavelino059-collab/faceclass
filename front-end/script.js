@@ -795,7 +795,9 @@ document
 
 document
     .getElementById("btn-entrada")
-    .addEventListener("click", () => {
+    .addEventListener("click", function () {
+
+        const btnEntrada = this;
 
         const mensagem =
             document.getElementById(
@@ -858,6 +860,7 @@ document
         mensagem.textContent =
             "Verificando sua localização...";
 
+        btnEntrada.disabled = true;
 
         verificarLocalizacao(
             (estaNaEscola) => {
@@ -869,6 +872,8 @@ document
 
                     mensagem.textContent =
                         "Você precisa estar na escola para registrar sua entrada.";
+
+                    btnEntrada.disabled = false;
 
                     return;
                 }
@@ -1046,6 +1051,12 @@ function registrarSaida(
     motivo = ""
 ) {
 
+    const btnSaida =
+        document.getElementById("btn-saida");
+
+    const btnConfirmarSaida =
+        document.getElementById("btn-confirmar-saida");
+
     const mensagem =
         document.getElementById(
             "mensagem-principal"
@@ -1083,6 +1094,9 @@ function registrarSaida(
     mensagem.textContent =
         "Verificando sua localização...";
 
+    if (btnSaida) btnSaida.disabled = true;
+    if (btnConfirmarSaida) btnConfirmarSaida.disabled = true;
+
 
     verificarLocalizacao(
         (estaNaEscola) => {
@@ -1095,6 +1109,9 @@ function registrarSaida(
 
                 mensagem.textContent =
                     "Você precisa estar na escola para registrar sua saída.";
+
+                if (btnSaida) btnSaida.disabled = false;
+                if (btnConfirmarSaida) btnConfirmarSaida.disabled = false;
 
                 return;
             }
@@ -1506,6 +1523,16 @@ function atualizarStatus() {
             "status-saida"
         );
 
+    const btnEntrada =
+        document.getElementById(
+            "btn-entrada"
+        );
+
+    const btnSaida =
+        document.getElementById(
+            "btn-saida"
+        );
+
 
     // ==========================================
     // ENTRADA
@@ -1516,10 +1543,14 @@ function atualizarStatus() {
         statusEntrada.textContent =
             `Registrada às ${aluno.entrada}`;
 
+        if (btnEntrada) btnEntrada.disabled = true;
+
     } else {
 
         statusEntrada.textContent =
             "Ainda não registrada";
+
+        if (btnEntrada) btnEntrada.disabled = false;
 
     }
 
@@ -1533,46 +1564,14 @@ function atualizarStatus() {
         statusSaida.textContent =
             `Registrada às ${aluno.saida}`;
 
+        if (btnSaida) btnSaida.disabled = true;
+
     } else {
 
         statusSaida.textContent =
             "Ainda não registrada";
 
-    }
-
-
-    // ==========================================
-    // ÚLTIMO REGISTRO
-    // ==========================================
-
-    const ultimoRegistro =
-        document.getElementById(
-            "ultimo-registro"
-        );
-
-
-    if (ultimoRegistro) {
-
-        if (
-            aluno.historico &&
-            aluno.historico.length > 0
-        ) {
-
-            const ultimo =
-                aluno.historico[
-                    aluno.historico.length - 1
-                ];
-
-
-            ultimoRegistro.textContent =
-                `${ultimo.tipo} registrada em ${ultimo.data} às ${ultimo.hora}`;
-
-        } else {
-
-            ultimoRegistro.textContent =
-                "Nenhum registro realizado.";
-
-        }
+        if (btnSaida) btnSaida.disabled = false;
 
     }
 
@@ -1616,8 +1615,13 @@ function atualizarStatus() {
                         "8px";
 
 
-                    p.textContent =
-                        `${item.tipo} registrada em ${item.data} às ${item.hora}`;
+                    let texto = `${item.tipo} registrada em ${item.data} às ${item.hora}`;
+
+                    if (item.motivo) {
+                        texto += ` (Motivo: ${item.motivo})`;
+                    }
+
+                    p.textContent = texto;
 
 
                     listaHistorico.appendChild(

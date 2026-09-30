@@ -204,54 +204,30 @@ document
 // FORMATAR TELEFONE
 // ==========================================
 
-const telefone =
-    document.getElementById(
-        "responsavel-telefone"
-    );
+const telefone = document.getElementById("responsavel-telefone");
 
+telefone.addEventListener("input", () => {
+    let numero = telefone.value.replace(/\D/g, "");
 
-telefone.addEventListener(
-    "input",
-    () => {
+    numero = numero.slice(0, 11);
 
-        let numero =
-            telefone.value.replace(
-                /\D/g,
-                ""
-            );
-
-
-        numero =
-            numero.slice(0, 11);
-
-
-        if (numero.length <= 2) {
-
-            telefone.value =
-                numero.length > 0
-                    ? `(${numero}`
-                    : "";
-
-            return;
-
-        }
-
-
-        if (numero.length <= 3) {
-
-            telefone.value =
-                `(${numero.slice(0, 2)}) ${numero.slice(2)}`;
-
-            return;
-
-        }
-
-
-        telefone.value =
-            `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3)}`;
-
+    if (numero.length <= 2) {
+        telefone.value = numero.length > 0 ? `(${numero}` : "";
+        return;
     }
-);
+
+    if (numero.length <= 3) {
+        telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2)}`;
+        return;
+    }
+
+    if (numero.length <= 7) {
+        telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3)}`;
+        return;
+    }
+
+    telefone.value = `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3, 7)}-${numero.slice(7)}`;
+});
 
 
 // ==========================================

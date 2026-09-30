@@ -70,5 +70,102 @@ def cadastrar_aluno():
     }), 201
 
 
+@app.route("/login", methods=["POST"])
+def login():
+
+    dados = request.get_json()
+
+    RA = dados["RA"]
+    senha = dados["senha"]
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    sql = """
+        SELECT id, nome, RA, email
+        FROM aluno
+        WHERE RA = %s AND senha = %s
+    """
+
+    cursor.execute(sql, (RA, senha))
+
+    aluno = cursor.fetchone()
+
+    cursor.close()
+    conexao.close()
+
+    if aluno:
+        return jsonify({
+            "mensagem": "Login realizado com sucesso!",
+            "aluno": aluno
+        })
+
+    return jsonify({
+        "erro": "RA ou senha incorretos."
+    }), 401
+
+@app.route("/presenca", methods=["POST"])
+def registrar_presenca():
+
+    dados = request.get_json()
+
+    aluno_id = dados["aluno_id"]
+    tipo = dados["tipo"]
+    latitude = dados["latitude"]
+    longitude = dados["longitude"]
+    validacao_facial = dados["validacao_facial"]
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    sql = """
+        INSERT INTO presenca
+        (aluno_id, tipo, data, horario, latitude, longitude, validacao_facial)
+        VALUES (%s, %s, CURDATE(), CURTIME(), %s, %s, %s)
+    """
+
+    valores = (
+        aluno_id,
+        tipo,
+        latitude,
+        longitude,
+        validacao_facial
+    )
+
+    cursor.execute(sql, valores)
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+    return jsonify({
+        "mensagem": "Presença registrada com sucesso!"
+    }), 201
+
+@app.route("/presencas/<int:aluno_id>", methods=["GET"])
+def listar_presencas(aluno_id):
+
+    conexao = conectar()
+    cursor = conexao.cursor(dictionary=True)
+
+    sql = """
+        SELECT id, tipo, data, horario, latitude, longitude, validacao_facial
+        FROM presenca
+        WHERE aluno_id = %s
+        ORDER BY data DESC, horario DESC
+    """
+
+    cursor.execute(sql, (aluno_id,))
+    presencas = cursor.fetchall()
+
+    for presenca in presencas:
+        presenca["horario"] = str(presenca["horario"])
+        presenca["data"] = str(presenca["data"])
+
+    cursor.close()
+    conexao.close()
+
+    return jsonify(presencas)
+
 if __name__ == "__main__":
     app.run(debug=True)

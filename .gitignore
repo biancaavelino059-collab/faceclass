@@ -1,4 +1,10 @@
-.venv/
-__pycache__/
-*.pyc
+.env.*
+!.env.example
+banco-de-dados/modelos/
 .env
+.venv/
+.venv-web/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/

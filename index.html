@@ -41,8 +41,9 @@
                     type="text"
                     id="login-ra"
                     placeholder="0000000000000-0"
-                    maxlength="15"
-                    inputmode="numeric"
+                    maxlength="20"
+                    autocomplete="username"
+                    autocapitalize="characters"
                 >
 
             </div>
@@ -58,6 +59,8 @@
                     type="password"
                     id="login-senha"
                     placeholder="Digite sua senha"
+                    maxlength="128"
+                    autocomplete="current-password"
                 >
 
             </div>
@@ -71,21 +74,27 @@
             </button>
 
 
-            <!-- Botão de teste -->
+            <!-- Primeiro acesso cria uma conta pela API, sem acesso de teste. -->
 
             <button
-                id="btn-teste"
+                id="btn-primeiro-acesso"
                 class="botao-secundario"
                 style="margin-top: 10px; background-color: #f0f0f0;"
             >
-                ⚡ Entrar como Aluno Teste
+                Primeiro acesso: criar conta
             </button>
 
 
             <p
                 id="mensagem-login"
                 class="mensagem"
+                role="status"
+                aria-live="polite"
             ></p>
+
+            <button id="btn-atualizar-login" class="botao-secundario botao-extra">
+                Tentar conexão novamente
+            </button>
 
         </section>
 
@@ -150,8 +159,9 @@
                     type="text"
                     id="cadastro-ra"
                     placeholder="0000000000000-0"
-                    maxlength="15"
-                    inputmode="numeric"
+                    maxlength="20"
+                    autocomplete="username"
+                    autocapitalize="characters"
                 >
 
             </div>
@@ -166,7 +176,10 @@
                 <input
                     type="password"
                     id="cadastro-senha"
-                    placeholder="Crie uma senha"
+                    placeholder="Crie uma senha com pelo menos 8 caracteres"
+                    minlength="8"
+                    maxlength="128"
+                    autocomplete="new-password"
                 >
 
             </div>
@@ -235,7 +248,13 @@
             <p
                 id="mensagem-cadastro"
                 class="mensagem"
+                role="status"
+                aria-live="polite"
             ></p>
+
+            <button id="btn-voltar-login" class="botao-secundario botao-extra">
+                Voltar para o login
+            </button>
 
         </section>
 
@@ -253,11 +272,11 @@
                 CONTROLE ESCOLAR
             </div>
 
-            <h1>
+            <h1 id="titulo-facial">
                 Cadastro facial
             </h1>
 
-            <p class="subtitulo">
+            <p id="subtitulo-facial" class="subtitulo">
                 Agora precisamos cadastrar seu rosto.
             </p>
 
@@ -268,6 +287,7 @@
                     id="camera"
                     autoplay
                     playsinline
+                    muted
                 ></video>
 
             </div>
@@ -286,13 +306,22 @@
             </button>
 
 
-            <canvas id="canvas-rosto"></canvas>
+            <canvas id="canvas-rosto" hidden></canvas>
 
 
             <p
                 id="mensagem-facial"
                 class="mensagem"
+                role="status"
+                aria-live="polite"
             ></p>
+
+            <button id="btn-reabrir-camera" class="botao-secundario botao-extra">
+                Abrir câmera novamente
+            </button>
+            <button id="btn-cancelar-facial" class="botao-secundario botao-extra">
+                Sair da conta
+            </button>
 
         </section>
 
@@ -398,8 +427,9 @@
 
                     <textarea
                         id="motivo-saida"
-                        placeholder="Digite o motivo da saída..."
+                        placeholder="Obrigatório se a saída for antecipada"
                         rows="3"
+                        maxlength="500"
                     ></textarea>
 
                 </div>
@@ -409,7 +439,7 @@
                     id="btn-confirmar-saida"
                     class="botao-principal"
                 >
-                    Confirmar saída
+                    Continuar para a câmera
                 </button>
 
             </div>
@@ -428,6 +458,10 @@
                     <p>Nenhum registro realizado.</p>
                 </div>
 
+                <button id="btn-atualizar" class="botao-secundario botao-extra">
+                    Atualizar registros
+                </button>
+
             </div>
 
 
@@ -444,6 +478,8 @@
             <p
                 id="mensagem-principal"
                 class="mensagem"
+                role="status"
+                aria-live="polite"
             ></p>
 
         </section>
@@ -451,7 +487,7 @@
     </main>
 
 
-    <script src="script.js"></script>
+    <script src="front-end/script.js"></script>
 
 </body>
 

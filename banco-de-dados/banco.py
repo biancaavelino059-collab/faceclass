@@ -6,7 +6,15 @@ import mysql.connector
 from dotenv import load_dotenv
 
 BASE = Path(__file__).resolve().parent
-load_dotenv(BASE / ".env")
+
+
+def carregar_configuracao():
+    # No fluxo local, o arquivo salvo pelo assistente é a configuração escolhida.
+    # Senhas são literais: não expandir trechos como ${VARIAVEL}.
+    load_dotenv(BASE / ".env", override=True, interpolate=False)
+
+
+carregar_configuracao()
 
 
 def conectar():

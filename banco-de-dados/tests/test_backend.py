@@ -9,6 +9,7 @@ As configurações usadas aqui são fictícias. O import impede a leitura de .en
 import json
 import os
 import sys
+import tempfile
 import unittest
 from contextlib import contextmanager
 from datetime import datetime
@@ -48,6 +49,7 @@ with patch("dotenv.load_dotenv", return_value=False), patch.dict(
     import emails
     import facial
     import testar_email
+    import configurar_banco
 
 
 SENHA = "  senha-de-teste-123  "
@@ -547,6 +549,75 @@ class Transacoes(Isolado):
         comandos = [chamada.args[0] for chamada in cursor_gravacao.execute.call_args_list]
         self.assertTrue(any("INSERT INTO presenca" in sql for sql in comandos))
         self.assertTrue(any("INSERT INTO notificacao_email" in sql for sql in comandos))
+
+
+class ConfigurarBancoLocal(Isolado):
+    CONFIG = {
+        "DB_HOST": "127.0.0.1", "DB_PORT": "3306", "DB_NAME": "faceclass",
+        "DB_USER": "usuario-ficticio", "DB_PASSWORD": "",
+    }
+
+    def test_senha_vazia_e_enviada_sem_fallback(self):
+        conexao = MagicMock()
+        conexao.cursor.return_value.fetchone.return_value = ("faceclass",)
+        with patch.object(configurar_banco.mysql.connector, "connect", return_value=conexao) as abrir:
+            self.assertTrue(configurar_banco.testar_conexao(self.CONFIG))
+        self.assertEqual(abrir.call_args.kwargs["password"], "")
+        self.assertEqual(abrir.call_args.kwargs["user"], "usuario-ficticio")
+        conexao.cursor.return_value.close.assert_called_once()
+        conexao.close.assert_called_once()
+
+    def test_autenticacao_recusada_nao_salva_nem_imprime_senha(self):
+        configuracao = dict(self.CONFIG, DB_PASSWORD="senha-ficticia-nao-exibir")
+        erro = configurar_banco.mysql.connector.Error(errno=1045)
+        with patch.object(configurar_banco, "preparar_env"), patch.object(
+            configurar_banco, "coletar_configuracao", return_value=configuracao
+        ), patch.object(configurar_banco, "testar_conexao", side_effect=erro), patch.object(
+            configurar_banco, "salvar_configuracao"
+        ) as salvar, patch("builtins.print") as imprimir:
+            self.assertEqual(configurar_banco.main(), 1)
+        salvar.assert_not_called()
+        self.assertNotIn(configuracao["DB_PASSWORD"], str(imprimir.call_args_list))
+
+    def test_salvar_preserva_chaves_e_arroba_da_senha(self):
+        from dotenv import dotenv_values
+
+        with tempfile.TemporaryDirectory() as pasta:
+            caminho = Path(pasta) / ".env"
+            caminho.write_text(
+                'APP_SECRET=chave-ficticia\nFACE_ENCRYPTION_KEY=outra-chave-ficticia\n',
+                encoding="utf-8",
+            )
+            with patch.object(configurar_banco, "ENV", caminho):
+                configurar_banco.salvar_configuracao(dict(self.CONFIG, DB_PASSWORD="@senha'ficticia"))
+            valores = dotenv_values(caminho)
+        self.assertEqual(valores["APP_SECRET"], "chave-ficticia")
+        self.assertEqual(valores["FACE_ENCRYPTION_KEY"], "outra-chave-ficticia")
+        self.assertEqual(valores["DB_PASSWORD"], "@senha'ficticia")
+
+    def test_coleta_nao_reutiliza_senha_quando_enter_escolhe_vazio(self):
+        with patch.object(configurar_banco, "dotenv_values", return_value=self.CONFIG), patch(
+            "builtins.input", return_value=""
+        ), patch.object(configurar_banco.getpass, "getpass", return_value=""), patch("builtins.print"):
+            configuracao = configurar_banco.coletar_configuracao()
+        self.assertEqual(configuracao["DB_PASSWORD"], "")
+
+    def test_arquivo_local_prevalece_e_senha_nao_expande_variavel(self):
+        from dotenv import load_dotenv
+
+        with tempfile.TemporaryDirectory() as pasta:
+            base = Path(pasta)
+            (base / ".env").write_text(
+                'DB_USER=usuario-local\nDB_PASSWORD="@${SEGREDO_FICTICIO}"\n',
+                encoding="utf-8",
+            )
+            with patch.dict(os.environ, {
+                "DB_USER": "usuario-antigo", "DB_PASSWORD": "senha-antiga",
+                "SEGREDO_FICTICIO": "nao-usar",
+            }), patch.object(banco, "BASE", base), patch.object(banco, "load_dotenv", load_dotenv):
+                banco.carregar_configuracao()
+                self.assertEqual(os.environ["DB_USER"], "usuario-local")
+                self.assertEqual(os.environ["DB_PASSWORD"], "@${SEGREDO_FICTICIO}")
 
 
 class TesteEmailLocal(Isolado):

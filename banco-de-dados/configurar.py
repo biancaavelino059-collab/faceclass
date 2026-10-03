@@ -68,7 +68,7 @@ def preparar_env():
     # Modo exclusivo: nunca sobrescrever uma configuração criada em paralelo.
     with destino.open("x", encoding="utf-8") as arquivo:
         arquivo.write(exemplo)
-    print(".env criado com chaves persistentes. Preencha MySQL e SMTP localmente.")
+    print(".env criado com chaves persistentes. Configure MySQL; Gmail pode ficar para depois.")
 
 
 if __name__ == "__main__":

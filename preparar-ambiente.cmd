@@ -18,7 +18,8 @@ if errorlevel 1 goto falha
 ".venv-web\Scripts\python.exe" "banco-de-dados\configurar.py"
 if errorlevel 1 goto falha
 echo.
-echo Ambiente preparado. Configure MySQL e SMTP no banco-de-dados\.env.
+echo Ambiente preparado. Execute configurar-banco.cmd para informar a conexao MySQL.
+echo Gmail pode ficar para depois; ele nao bloqueia o site.
 popd
 pause
 exit /b 0

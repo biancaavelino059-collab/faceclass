@@ -9,6 +9,7 @@ if not exist "%~dp0.venv-web\Scripts\python.exe" (
 pushd "%~dp0banco-de-dados"
 "%~dp0.venv-web\Scripts\python.exe" verificar.py
 if errorlevel 1 (
+    echo Se a pendencia for a conexao MySQL, execute configurar-banco.cmd.
     popd
     pause
     exit /b 1

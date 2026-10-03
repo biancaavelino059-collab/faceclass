@@ -7,8 +7,9 @@ nos arquivos do projeto. O front e SQL seguem esse contrato.
 
 Foram implementados app.py, banco.py, facial.py e emails.py, configuração,
 diagnóstico, scripts de inicialização e testes. O ambiente funcional é .venv-web.
-Não foi executada a migração no MySQL instalado, não foi enviado e-mail real
-e não houve commit/push. Veja ../README_WEB.md para o roteiro atualizado.
+As credenciais são locais de cada computador. A conexão pode ser informada
+por `configurar-banco.cmd`; Gmail é opcional e pode ser configurado depois.
+Veja ../README_WEB.md para o roteiro atualizado.
 
 ## O que foi ajustado e por quê
 
@@ -55,8 +56,8 @@ Os arquivos implementados fazem:
    presença, histórico e servir o front.
 3. facial.py: detecção e comparação de rosto com template criptografado.
 4. emails.py: fila/worker de envio com tentativa e reserva.
-5. requirements.txt, requirements.lock.txt, .env.example e configurar.py:
-   instalação e configuração local. Credenciais SMTP ainda precisam ser preenchidas.
+5. requirements.txt, requirements.lock.txt, .env.example, configurar.py e
+   configurar_banco.py: instalação e configuração local. SMTP pode ficar para depois.
 
 Os quatro arquivos Python já foram criados/editados e conferidos contra o contrato.
 A integração foi testada em MySQL isolado, não na base instalada do usuário.

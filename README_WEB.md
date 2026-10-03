@@ -1,34 +1,40 @@
 # FaceClass web: como rodar e o que foi implementado
 
-## No computador do Kauê
-Os arquivos e o ambiente Python já foram preparados. O ambiente novo é
-`.venv-web`, com Python 3.12.14. O ambiente antigo `.venv` foi preservado.
-Os dois modelos oficiais foram baixados e seus hashes conferidos.
+## Como iniciar no PC ou na escola
 
-O serviço MySQL80 está ligado, mas ainda falta validar as credenciais locais,
-aplicar a migração na base real após backup e preencher SMTP.
-A implementação não enviou e-mails reais nem modificou a base instalada.
+1. Instale Python 3.12 de 64 bits com o Python Launcher e MySQL 8+.
+2. Execute `preparar-ambiente.cmd` uma vez na pasta do projeto.
+3. Execute `configurar-banco.cmd`: informe a conexão do MySQL daquele PC.
+   Os valores entre colchetes podem ser mantidos com Enter; a senha fica oculta.
+4. Prepare o SQL com a equipe do banco conforme a seção abaixo e confira
+   coordenadas, raio e horário da escola no `.env` local.
+5. Execute `iniciar-site.cmd` e abra http://127.0.0.1:5000.
 
-1. Inicie MySQL80 em Win+R -> services.msc.
-2. Faça backup e prepare o banco conforme a seção abaixo.
-3. Preencha o arquivo local `banco-de-dados/.env`. Não compartilhe senhas/chaves.
-4. Execute `iniciar-site.cmd` e abra http://127.0.0.1:5000.
-5. Com SMTP configurado, execute `testar-email.cmd` para enviar um aviso
-   de teste apenas ao próprio remetente. Depois execute `iniciar-emails.cmd`.
-6. Use Primeiro acesso para criar uma conta de teste. Não existem credenciais
-   universais de aluno/professor. O projeto atual é web para registro do aluno
-   e aviso ao responsável.
+O Gmail pode ser configurado depois. Não é necessário para iniciar o site.
+Até lá, as notificações de entrada e saída ficam pendentes no banco.
+Para testes, use apenas e-mails destinatários que você controla: ao iniciar
+o processador mais tarde, ele enviará os avisos pendentes também.
 
-## Em outro computador (escola)
-Clone o projeto e instale Python 3.12 de 64 bits com o Python Launcher.
-Execute `preparar-ambiente.cmd` na raiz do projeto.
+Use Primeiro acesso para criar uma conta de teste. Não existem credenciais
+universais de aluno/professor. O projeto atual é web para registro do aluno
+e aviso ao responsável.
 
 O script cria `.venv-web`, instala `requirements.lock.txt`, baixa os dois modelos
 e verifica os hashes. Cria `.env` somente se ausente, com chaves aleatórias
 persistentes. Não sobrescreve configuração existente nem modifica o MySQL.
 
-Preencha as credenciais do MySQL instalado naquele computador, confirme
-coordenadas/raio/horário da escola e configure o serviço SMTP.
+O assistente `configurar-banco.cmd` testa o acesso antes de salvar as credenciais
+no `.env`. Se o MySQL recusar o usuário/senha, ele preserva os valores anteriores.
+O assistente não altera usuários, permissões, senhas ou dados do MySQL.
+O `.env` local tem prioridade sobre valores antigos do terminal e as senhas
+são lidas literalmente. Depois de salvar, reabra a janela do site para carregar
+a nova configuração. Em servidor sem `.env`, são usadas as variáveis de ambiente.
+
+É possível testar senha vazia apertando Enter na pergunta da senha, mas o
+servidor precisa ter uma conta já configurada sem senha. Apagar a senha do
+`.env` não remove a senha da conta MySQL. O código aceita `@` diretamente,
+sem transformar em `%40`.
+
 A base e as chaves não são automaticamente transferidas pelo Git:
 restaurar uma base com templates exige também a chave facial correspondente,
 transportada de forma segura, fora do repositório.
@@ -69,8 +75,11 @@ precisam ser trocadas antes de uso real.
   reserva por token e envia por SMTP/TLS, com até cinco tentativas.
 - `banco-de-dados/configurar.py`: verifica/baixa modelos e prepara configuração
   sem trocar chaves existentes. Não acessa dados de alunos.
-- `banco-de-dados/verificar.py`: verifica configuração/conexão/colunas sem mostrar
-  senhas ou dados de alunos. Diagnóstico manual, na pasta banco-de-dados:
+- `banco-de-dados/configurar_banco.py` e `configurar-banco.cmd`: assistente
+  para informar e testar a conexão MySQL sem editar o `.env` manualmente.
+- `banco-de-dados/verificar.py`: verifica configuração, conexão, tipos, índices
+  únicos e vínculos das tabelas, sem mostrar senhas ou dados de alunos.
+  Diagnóstico manual, na pasta banco-de-dados:
   `..\.venv-web\Scripts\python.exe verificar.py`.
 - `banco-de-dados/testar_email.py` e `testar-email.cmd`: enviam um único
   e-mail de teste para o próprio remetente, sem registrar presença ou usar MySQL.
@@ -85,9 +94,8 @@ Use credenciais da aplicação com permissões limitadas para uso real.
 
 ## Gmail inicialmente
 O host já foi configurado como smtp.gmail.com, porta 587 e STARTTLS.
-No arquivo LOCAL banco-de-dados/.env, SMTP_USER e SMTP_FROM estão preenchidos
-com o Gmail de teste informado por Kauê. Preencha apenas SMTP_PASSWORD com a
-senha de aplicativo dessa conta.
+Quando for ativar o e-mail, preencha SMTP_USER e SMTP_FROM com o Gmail remetente
+e SMTP_PASSWORD com a senha de aplicativo dessa conta no `.env` local.
 Não use a senha normal da conta, não a envie no chat e não a coloque no Git.
 
 A senha de aplicativo exige verificação em duas etapas e pode não estar
@@ -98,6 +106,10 @@ proteções: será necessário escolher outro fluxo de autenticação/provedor.
 
 O código aceita outro serviço depois: alterar SMTP_HOST/PORT/SECURITY/USER/
 PASSWORD/FROM no .env, sem trocar a lógica de fila.
+
+Depois de configurar, execute `testar-email.cmd` para mandar uma única mensagem
+ao próprio remetente. Confira a caixa de entrada e o spam; então execute
+`iniciar-emails.cmd` para processar a fila de avisos.
 
 ## API
 Página e API precisam ficar na mesma origem. Não use Live Server nem file://.
@@ -134,7 +146,7 @@ e spam. Estado enviado significa aceitação pelo SMTP, não comprovação de en
 Uma interrupção após envio e antes do UPDATE pode gerar aviso duplicado.
 
 ## O que foi realmente verificado
-- 51 testes automatizados do backend, sem MySQL/SMTP/rede/fotos reais.
+- 64 testes automatizados do backend e da estrutura do banco, sem MySQL/SMTP/rede/fotos reais.
 - 14 cenários isolados de front, com API/DOM/câmera simulados.
 - 34 verificações de modelos/formatos/Fernet/matemática facial, sem fotos de pessoas.
 - 44 verificações de API com MySQL 8.0.46 em instância isolada, dados fictícios:
@@ -143,9 +155,9 @@ Uma interrupção após envio e antes do UPDATE pode gerar aviso duplicado.
 - Instalação consistente das dependências (pip check) e sintaxe dos Python.
 - O schema e migração SQL também foram testados anteriormente em base isolada.
 
-Não foi comprovada integração com a base instalada do usuário, reconhecimento
-do seu rosto nem entrega SMTP real. O MySQL80 está ligado, mas rejeitou as
-credenciais atuais. Nenhum commit/push foi feito.
+Esses testes não comprovam a conexão com o MySQL de outro computador,
+reconhecimento do rosto do usuário nem entrega real de e-mail. Cada computador
+precisa da sua configuração local e do teste de ponta a ponta.
 
 ## Limites antes de usar com alunos reais
 É desenvolvimento local, não servidor público de produção. Câmera em outro

@@ -247,6 +247,35 @@ h2 {
 
 /* DESKTOP */
 
+/* Complementos para integração: mantém as cores e o layout do front original. */
+.botao-extra {
+    margin-top: 10px;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.campo textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font: inherit;
+    resize: vertical;
+}
+
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.historico-item {
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+}
+
 @media (min-width: 481px) {
     body {
         display: flex;

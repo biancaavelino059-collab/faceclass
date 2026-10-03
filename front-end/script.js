@@ -1,1643 +1,577 @@
-// ==========================================
-// DADOS DOS ALUNOS
-// ==========================================
+"use strict";
 
-let alunos = JSON.parse(localStorage.getItem("alunos")) || [];
-
-let aluno = JSON.parse(localStorage.getItem("alunoAtual")) || {
-    nome: "",
-    email: "",
-    ra: "",
-    senha: "",
-    rostoCadastrado: false,
-    rostoImagem: "",
-    responsavel: {
-        nome: "",
-        telefone: "",
-        email: ""
-    },
-    entrada: null,
-    saida: null,
-    motivoSaida: "",
-    historico: []
+// Dados pessoais, senhas e fotos não são persistidos no navegador.
+// O backend é a autoridade para sessão, reconhecimento, localização e horário.
+const porId = (id) => document.getElementById(id);
+const estado = {
+    aluno: null,
+    csrf: "",
+    historico: [],
+    hoje: null,
+    historicoCarregado: false,
+    sessaoConhecida: false,
+    ocupado: false,
+    tela: "tela-login",
+    acaoFacial: null,
+    stream: null,
+    cameraVersao: 0,
+    cameraPronta: false,
 };
+let consultaHistorico = null;
 
-function salvarAlunos() {
-    localStorage.setItem("alunos", JSON.stringify(alunos));
-}
-
-function salvarAlunoAtual() {
-    localStorage.setItem("alunoAtual", JSON.stringify(aluno));
-
-    const indice = alunos.findIndex(a => a.ra === aluno.ra);
-
-    if (indice !== -1) {
-        alunos[indice] = aluno;
-        salvarAlunos();
+class ErroRequisicao extends Error {
+    constructor(mensagem, status = 0) {
+        super(mensagem);
+        this.status = status;
     }
 }
 
-
-// ==========================================
-// IMPORTAR CADASTRO ANTIGO
-// ==========================================
-
-const alunoAntigo = JSON.parse(localStorage.getItem("aluno"));
-
-if (alunoAntigo && alunoAntigo.ra) {
-
-    const jaExiste = alunos.some(
-        a => a.ra === alunoAntigo.ra
-    );
-
-    if (!jaExiste) {
-
-        if (!alunoAntigo.historico) {
-            alunoAntigo.historico = [];
-        }
-
-        if (alunoAntigo.motivoSaida === undefined) {
-            alunoAntigo.motivoSaida = "";
-        }
-
-        alunos.push(alunoAntigo);
-        salvarAlunos();
-    }
+function mensagem(id, texto = "", tipo = "erro") {
+    const elemento = porId(id);
+    elemento.textContent = texto;
+    elemento.style.color = tipo === "sucesso" ? "var(--success)"
+        : tipo === "info" ? "var(--subtext)" : "var(--danger)";
 }
 
-
-// ==========================================
-// ELEMENTOS DAS TELAS
-// ==========================================
-
-const telaLogin =
-    document.getElementById("tela-login");
-
-const telaCadastro =
-    document.getElementById("tela-cadastro");
-
-const telaFacial =
-    document.getElementById("tela-facial");
-
-const telaPrincipal =
-    document.getElementById("tela-principal");
-
-
-// ==========================================
-// TROCAR DE TELA
-// ==========================================
-
-function mostrarTela(tela) {
-
-    telaLogin.classList.add("escondida");
-    telaCadastro.classList.add("escondida");
-    telaFacial.classList.add("escondida");
-    telaPrincipal.classList.add("escondida");
-
-    tela.classList.remove("escondida");
+function normalizarRA(valor) {
+    return valor.replace(/[-\s]/g, "").toUpperCase();
 }
 
-
-// ==========================================
-// FORMATAR RA
-// ==========================================
-
-function formatarRA(valor) {
-
-    let numeros =
-        valor.replace(/\D/g, "");
-
-    numeros =
-        numeros.slice(0, 14);
-
-    if (numeros.length > 13) {
-
-        return (
-            numeros.slice(0, 13) +
-            "-" +
-            numeros.slice(13)
-        );
+function validarRA(valor) {
+    const ra = normalizarRA(valor);
+    if (!/^[0-9A-Z]{5,20}$/.test(ra)) {
+        throw new Error("Informe um RA com 5 a 20 letras ou números, incluindo o dígito.");
     }
-
-    return numeros;
+    return ra;
 }
 
-
-const loginRa =
-    document.getElementById("login-ra");
-
-const cadastroRa =
-    document.getElementById("cadastro-ra");
-
-
-loginRa.addEventListener("input", function () {
-
-    this.value =
-        formatarRA(this.value);
-
-});
-
-
-cadastroRa.addEventListener("input", function () {
-
-    this.value =
-        formatarRA(this.value);
-
-});
-
-
-// ==========================================
-// FORMATAR TELEFONE
-// Formato: (11) 9 1234-5678
-// ==========================================
-
-const telefone =
-    document.getElementById("responsavel-telefone");
-
-
-telefone.addEventListener("input", () => {
-
-    let numero =
-        telefone.value.replace(/\D/g, "");
-
-    numero =
-        numero.slice(0, 11);
-
-
-    if (numero.length <= 2) {
-
-        telefone.value =
-            numero ? `(${numero}` : "";
-
-        return;
-    }
-
-
-    if (numero.length <= 3) {
-
-        telefone.value =
-            `(${numero.slice(0, 2)}) ${numero.slice(2)}`;
-
-        return;
-    }
-
-
-    if (numero.length <= 7) {
-
-        telefone.value =
-            `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3)}`;
-
-        return;
-    }
-
-
-    telefone.value =
-        `(${numero.slice(0, 2)}) ${numero.slice(2, 3)} ${numero.slice(3, 7)}-${numero.slice(7)}`;
-
-});
-
-
-// ==========================================
-// LOGIN
-// ==========================================
-
-document
-    .getElementById("btn-login")
-    .addEventListener("click", () => {
-
-        const raFormatado =
-            loginRa.value.trim();
-
-        const senha =
-            document
-                .getElementById("login-senha")
-                .value
-                .trim();
-
-        const mensagem =
-            document
-                .getElementById("mensagem-login");
-
-
-        const ra =
-            raFormatado.replace("-", "");
-
-
-        const formatoRA =
-            /^0000[0-9]{9}[a-zA-Z0-9]$/;
-
-
-        if (!raFormatado || !senha) {
-
-            mensagem.textContent =
-                "Preencha o RA + dígito e a senha.";
-
-            return;
-        }
-
-
-        if (!formatoRA.test(ra)) {
-
-            mensagem.textContent =
-                "Digite um RA válido no formato 0000000000000-0.";
-
-            return;
-        }
-
-
-        const alunoEncontrado =
-            alunos.find(
-                a => a.ra === ra
-            );
-
-
-        // ==========================================
-        // PRIMEIRO ACESSO
-        // ==========================================
-
-        if (!alunoEncontrado) {
-
-            localStorage.removeItem(
-                "alunoAtual"
-            );
-
-
-            const ultimosQuatro =
-                ra.slice(-4);
-
-
-            if (senha !== ultimosQuatro) {
-
-                mensagem.textContent =
-                    "No primeiro acesso, a senha deve ser os 4 últimos dígitos do RA.";
-
-                return;
-            }
-
-
-            aluno = {
-
-                nome: "",
-                email: "",
-                ra: ra,
-                senha: "",
-
-                rostoCadastrado: false,
-                rostoImagem: "",
-
-                responsavel: {
-                    nome: "",
-                    telefone: "",
-                    email: ""
-                },
-
-                entrada: null,
-                saida: null,
-                motivoSaida: "",
-                historico: []
-            };
-
-
-            cadastroRa.value =
-                formatarRA(ra);
-
-
-            mensagem.textContent = "";
-
-            mostrarTela(telaCadastro);
-
-            return;
-        }
-
-
-        // ==========================================
-        // ALUNO JÁ CADASTRADO
-        // ==========================================
-
-        if (
-            senha !==
-            alunoEncontrado.senha
-        ) {
-
-            mensagem.textContent =
-                "RA ou senha incorretos.";
-
-            return;
-        }
-
-
-        aluno =
-            alunoEncontrado;
-
-
-        if (!aluno.historico) {
-            aluno.historico = [];
-        }
-
-
-        if (aluno.motivoSaida === undefined) {
-            aluno.motivoSaida = "";
-        }
-
-
-        salvarAlunoAtual();
-
-        mensagem.textContent = "";
-
-
-        // ==========================================
-        // VERIFICAR ROSTO
-        // ==========================================
-
-        if (!aluno.rostoCadastrado) {
-
-            mostrarTela(telaFacial);
-
-            abrirCamera();
-
-            return;
-        }
-
-
-        carregarTelaPrincipal();
-
-        mostrarTela(telaPrincipal);
-
-    });
-
-
-// ==========================================
-// BOTÃO DE TESTE
-// ==========================================
-
-const btnTeste =
-    document.getElementById("btn-teste");
-
-
-if (btnTeste) {
-
-    btnTeste.addEventListener("click", () => {
-
-        const raTeste =
-            "0000123456789A";
-
-
-        let alunoEncontrado =
-            alunos.find(
-                a => a.ra === raTeste
-            );
-
-
-        if (!alunoEncontrado) {
-
-            alunoEncontrado = {
-
-                nome: "Aluno de Teste",
-                email: "teste@escola.com",
-                ra: raTeste,
-                senha: "1234",
-
-                rostoCadastrado: true,
-                rostoImagem: "",
-
-                responsavel: {
-                    nome: "Responsavel Teste",
-                    telefone: "11999999999",
-                    email: "responsavel@teste.com"
-                },
-
-                entrada: null,
-                saida: null,
-                motivoSaida: "",
-                historico: []
-            };
-
-
-            alunos.push(alunoEncontrado);
-
-            salvarAlunos();
-        }
-
-
-        if (!alunoEncontrado.historico) {
-            alunoEncontrado.historico = [];
-        }
-
-
-        aluno =
-            alunoEncontrado;
-
-
-        salvarAlunoAtual();
-
-        carregarTelaPrincipal();
-
-        mostrarTela(telaPrincipal);
-
-    });
-
-}
-
-
-// ==========================================
-// CADASTRO
-// ==========================================
-
-document
-    .getElementById("btn-cadastrar")
-    .addEventListener("click", () => {
-
-        const nome =
-            document
-                .getElementById("cadastro-nome")
-                .value
-                .trim();
-
-
-        const email =
-            document
-                .getElementById("cadastro-email")
-                .value
-                .trim();
-
-
-        const raFormatado =
-            cadastroRa.value.trim();
-
-
-        const senha =
-            document
-                .getElementById("cadastro-senha")
-                .value
-                .trim();
-
-
-        const responsavelNome =
-            document
-                .getElementById("responsavel-nome")
-                .value
-                .trim();
-
-
-        const responsavelTelefone =
-            document
-                .getElementById("responsavel-telefone")
-                .value
-                .trim();
-
-
-        const responsavelEmail =
-            document
-                .getElementById("responsavel-email")
-                .value
-                .trim();
-
-
-        const mensagem =
-            document
-                .getElementById("mensagem-cadastro");
-
-
-        const ra =
-            raFormatado.replace("-", "");
-
-
-        // ==========================================
-        // CAMPOS VAZIOS
-        // ==========================================
-
-        if (
-            !nome ||
-            !email ||
-            !raFormatado ||
-            !senha ||
-            !responsavelNome ||
-            !responsavelTelefone ||
-            !responsavelEmail
-        ) {
-
-            mensagem.textContent =
-                "Preencha todos os campos.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // NOME
-        // ==========================================
-
-        const formatoNome =
-            /^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/;
-
-
-        if (!formatoNome.test(nome)) {
-
-            mensagem.textContent =
-                "Digite seu nome completo, usando apenas letras.";
-
-            return;
-        }
-
-
-        if (
-            !formatoNome.test(
-                responsavelNome
-            )
-        ) {
-
-            mensagem.textContent =
-                "Digite o nome completo do responsável, usando apenas letras.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // TELEFONE
-        // ==========================================
-
-        const formatoTelefone =
-            /^\(\d{2}\) 9 \d{4}-\d{4}$/;
-
-
-        if (
-            !formatoTelefone.test(
-                responsavelTelefone
-            )
-        ) {
-
-            mensagem.textContent =
-                "Digite um telefone válido no formato (11) 9 1234-5678.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // E-MAIL
-        // ==========================================
-
-        const formatoEmail =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-        if (
-            !formatoEmail.test(email)
-        ) {
-
-            mensagem.textContent =
-                "Digite um e-mail válido.";
-
-            return;
-        }
-
-
-        if (
-            !formatoEmail.test(
-                responsavelEmail
-            )
-        ) {
-
-            mensagem.textContent =
-                "Digite um e-mail válido para o responsável.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // RA
-        // ==========================================
-
-        const formatoRA =
-            /^0000[0-9]{9}[a-zA-Z0-9]$/;
-
-
-        if (
-            !formatoRA.test(ra)
-        ) {
-
-            mensagem.textContent =
-                "Digite um RA válido no formato 0000000000000-0.";
-
-            return;
-        }
-
-
-        // ==========================================
-        // SALVAR DADOS
-        // ==========================================
-
-        aluno.nome =
-            nome;
-
-        aluno.email =
-            email;
-
-        aluno.ra =
-            ra;
-
-        aluno.senha =
-            senha;
-
-
-        if (!aluno.responsavel) {
-            aluno.responsavel = {};
-        }
-
-
-        aluno.responsavel.nome =
-            responsavelNome;
-
-        aluno.responsavel.telefone =
-            responsavelTelefone;
-
-        aluno.responsavel.email =
-            responsavelEmail;
-
-
-        if (!aluno.historico) {
-            aluno.historico = [];
-        }
-
-
-        const indice =
-            alunos.findIndex(
-                a => a.ra === aluno.ra
-            );
-
-
-        if (indice === -1) {
-
-            alunos.push(aluno);
-
-        } else {
-
-            alunos[indice] =
-                aluno;
-        }
-
-
-        salvarAlunos();
-
-        salvarAlunoAtual();
-
-
-        mensagem.textContent = "";
-
-
-        mostrarTela(telaFacial);
-
-        abrirCamera();
-
-    });
-
-
-// ==========================================
-// CADASTRO FACIAL
-// ==========================================
-
-document
-    .getElementById("btn-cadastrar-facial")
-    .addEventListener("click", () => {
-
-        const camera =
-            document.getElementById("camera");
-
-
-        const canvas =
-            document.getElementById("canvas-rosto");
-
-
-        const mensagem =
-            document.getElementById("mensagem-facial");
-
-
-        if (!camera.srcObject) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "A câmera ainda não foi ativada.";
-
-            return;
-        }
-
-
-        if (camera.readyState < 2) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "Aguarde a câmera iniciar.";
-
-            return;
-        }
-
-
-        canvas.width =
-            camera.videoWidth;
-
-
-        canvas.height =
-            camera.videoHeight;
-
-
-        const contexto =
-            canvas.getContext("2d");
-
-
-        contexto.drawImage(
-            camera,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-
-
-        aluno.rostoCadastrado =
-            true;
-
-
-        aluno.rostoImagem =
-            canvas.toDataURL("image/jpeg");
-
-
-        salvarAlunoAtual();
-
-
-        mensagem.style.color =
-            "#22a06b";
-
-
-        mensagem.textContent =
-            "Rosto capturado com sucesso!";
-
-
-        setTimeout(() => {
-
-            carregarTelaPrincipal();
-
-            mostrarTela(telaPrincipal);
-
-        }, 1000);
-
-    });
-
-
-// ==========================================
-// REGISTRAR ENTRADA
-// ==========================================
-
-document
-    .getElementById("btn-entrada")
-    .addEventListener("click", function () {
-
-        const btnEntrada = this;
-
-        const mensagem =
-            document.getElementById(
-                "mensagem-principal"
-            );
-
-
-        if (aluno.entrada) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "Sua entrada já foi registrada hoje.";
-
-            return;
-        }
-
-
-        if (!aluno.rostoCadastrado) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "Você precisa cadastrar seu rosto primeiro.";
-
-            return;
-        }
-
-
-        const agora =
-            new Date();
-
-
-        const hora =
-            String(
-                agora.getHours()
-            ).padStart(2, "0");
-
-
-        const minuto =
-            String(
-                agora.getMinutes()
-            ).padStart(2, "0");
-
-
-        const horarioAtual =
-            `${hora}:${minuto}`;
-
-
-        const dataAtual =
-            agora.toLocaleDateString("pt-BR");
-
-
-        mensagem.style.color =
-            "#777";
-
-
-        mensagem.textContent =
-            "Verificando sua localização...";
-
-        btnEntrada.disabled = true;
-
-        verificarLocalizacao(
-            (estaNaEscola) => {
-
-                if (!estaNaEscola) {
-
-                    mensagem.style.color =
-                        "#e5484d";
-
-                    mensagem.textContent =
-                        "Você precisa estar na escola para registrar sua entrada.";
-
-                    btnEntrada.disabled = false;
-
-                    return;
-                }
-
-
-                aluno.entrada =
-                    horarioAtual;
-
-
-                if (!aluno.historico) {
-                    aluno.historico = [];
-                }
-
-
-                aluno.historico.push({
-
-                    tipo: "Entrada",
-                    hora: horarioAtual,
-                    data: dataAtual
-
-                });
-
-
-                salvarAlunoAtual();
-
-
-                mensagem.style.color =
-                    "#22a06b";
-
-
-                mensagem.textContent =
-                    `Entrada registrada às ${horarioAtual}.`;
-
-
-                atualizarStatus();
-
-            }
-        );
-
-    });
-
-
-// ==========================================
-// REGISTRAR SAÍDA
-// ==========================================
-
-document
-    .getElementById("btn-saida")
-    .addEventListener("click", () => {
-
-        const mensagem =
-            document.getElementById(
-                "mensagem-principal"
-            );
-
-
-        if (!aluno.entrada) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "Você precisa registrar sua entrada primeiro.";
-
-            return;
-        }
-
-
-        if (aluno.saida) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-            mensagem.textContent =
-                "Sua saída já foi registrada hoje.";
-
-            return;
-        }
-
-
-        const agora =
-            new Date();
-
-
-        const hora =
-            agora.getHours();
-
-
-        const minuto =
-            agora.getMinutes();
-
-
-        // Saída antes das 12:10
-        // exige motivo
-
-        if (
-            hora < 12 ||
-            (
-                hora === 12 &&
-                minuto < 10
-            )
-        ) {
-
-            const campoMotivo =
-                document.getElementById(
-                    "campo-motivo-saida"
-                );
-
-
-            campoMotivo.classList.remove(
-                "escondida"
-            );
-
-
-            mensagem.style.color =
-                "#e5484d";
-
-
-            mensagem.textContent =
-                "A saída antes das 12:10 exige um motivo.";
-
-            return;
-        }
-
-
-        registrarSaida();
-
-    });
-
-
-// ==========================================
-// CONFIRMAR SAÍDA ANTECIPADA
-// ==========================================
-
-document
-    .getElementById("btn-confirmar-saida")
-    .addEventListener("click", () => {
-
-        const motivo =
-            document
-                .getElementById("motivo-saida")
-                .value
-                .trim();
-
-
-        const mensagem =
-            document.getElementById(
-                "mensagem-principal"
-            );
-
-
-        if (!motivo) {
-
-            mensagem.style.color =
-                "#e5484d";
-
-
-            mensagem.textContent =
-                "Digite o motivo da saída antecipada.";
-
-            return;
-        }
-
-
-        registrarSaida(motivo);
-
-    });
-
-
-// ==========================================
-// REGISTRAR SAÍDA
-// ==========================================
-
-function registrarSaida(
-    motivo = ""
-) {
-
-    const btnSaida =
-        document.getElementById("btn-saida");
-
-    const btnConfirmarSaida =
-        document.getElementById("btn-confirmar-saida");
-
-    const mensagem =
-        document.getElementById(
-            "mensagem-principal"
-        );
-
-
-    const agora =
-        new Date();
-
-
-    const hora =
-        String(
-            agora.getHours()
-        ).padStart(2, "0");
-
-
-    const minuto =
-        String(
-            agora.getMinutes()
-        ).padStart(2, "0");
-
-
-    const horarioAtual =
-        `${hora}:${minuto}`;
-
-
-    const dataAtual =
-        agora.toLocaleDateString("pt-BR");
-
-
-    mensagem.style.color =
-        "#777";
-
-
-    mensagem.textContent =
-        "Verificando sua localização...";
-
-    if (btnSaida) btnSaida.disabled = true;
-    if (btnConfirmarSaida) btnConfirmarSaida.disabled = true;
-
-
-    verificarLocalizacao(
-        (estaNaEscola) => {
-
-            if (!estaNaEscola) {
-
-                mensagem.style.color =
-                    "#e5484d";
-
-
-                mensagem.textContent =
-                    "Você precisa estar na escola para registrar sua saída.";
-
-                if (btnSaida) btnSaida.disabled = false;
-                if (btnConfirmarSaida) btnConfirmarSaida.disabled = false;
-
-                return;
-            }
-
-
-            aluno.saida =
-                horarioAtual;
-
-
-            aluno.motivoSaida =
-                motivo;
-
-
-            if (!aluno.historico) {
-                aluno.historico = [];
-            }
-
-
-            aluno.historico.push({
-
-                tipo: "Saída",
-                hora: horarioAtual,
-                data: dataAtual,
-                motivo: motivo
-
-            });
-
-
-            salvarAlunoAtual();
-
-
-            document
-                .getElementById(
-                    "campo-motivo-saida"
-                )
-                .classList.add(
-                    "escondida"
-                );
-
-
-            document
-                .getElementById(
-                    "motivo-saida"
-                )
-                .value = "";
-
-
-            mensagem.style.color =
-                "#22a06b";
-
-
-            mensagem.textContent =
-                `Saída registrada às ${horarioAtual}.`;
-
-
-            atualizarStatus();
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// SAIR DA CONTA
-// ==========================================
-
-document
-    .getElementById("btn-sair")
-    .addEventListener("click", () => {
-
-        localStorage.removeItem(
-            "alunoAtual"
-        );
-
-
-        aluno = {
-
-            nome: "",
-            email: "",
-            ra: "",
-            senha: "",
-
-            rostoCadastrado: false,
-            rostoImagem: "",
-
-            responsavel: {
-                nome: "",
-                telefone: "",
-                email: ""
-            },
-
-            entrada: null,
-            saida: null,
-            motivoSaida: "",
-            historico: []
-
-        };
-
-
-        document.getElementById(
-            "login-ra"
-        ).value = "";
-
-
-        document.getElementById(
-            "login-senha"
-        ).value = "";
-
-
-        document.getElementById(
-            "mensagem-login"
-        ).textContent = "";
-
-
-        mostrarTela(telaLogin);
-
-    });
-
-
-// ==========================================
-// CÂMERA
-// ==========================================
-
-async function abrirCamera() {
-
-    const camera =
-        document.getElementById(
-            "camera"
-        );
-
-
-    const mensagem =
-        document.getElementById(
-            "mensagem-facial"
-        );
-
-
+// Cookies da sessão são HttpOnly; o token CSRF vem de GET /sessao.
+async function api(caminho, dados) {
+    const controlador = new AbortController();
+    const limite = setTimeout(() => controlador.abort(), 45000);
+    let resposta;
     try {
-
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-
-                    video: {
-                        facingMode: "user"
-                    },
-
-                    audio: false
-
-                });
-
-
-        camera.srcObject =
-            stream;
-
-
-        mensagem.style.color =
-            "#22a06b";
-
-
-        mensagem.textContent =
-            "Câmera ativada. Posicione seu rosto.";
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao acessar câmera:",
-            erro
-        );
-
-
-        mensagem.style.color =
-            "#e5484d";
-
-
-        mensagem.textContent =
-            "Não foi possível acessar sua câmera. Permita o acesso para continuar.";
-
-    }
-
-}
-
-
-// ==========================================
-// LOCALIZAÇÃO DA ESCOLA
-// ==========================================
-
-const ESCOLA = {
-
-    latitude:
-        -23.4713832,
-
-    longitude:
-        -46.6351309,
-
-    raio:
-        100
-
-};
-
-
-// ==========================================
-// CALCULAR DISTÂNCIA
-// ==========================================
-
-function calcularDistancia(
-    lat1,
-    lon1,
-    lat2,
-    lon2
-) {
-
-    const R =
-        6371e3;
-
-
-    const radLat1 =
-        lat1 *
-        Math.PI /
-        180;
-
-
-    const radLat2 =
-        lat2 *
-        Math.PI /
-        180;
-
-
-    const diferencaLat =
-        (
-            lat2 -
-            lat1
-        ) *
-        Math.PI /
-        180;
-
-
-    const diferencaLon =
-        (
-            lon2 -
-            lon1
-        ) *
-        Math.PI /
-        180;
-
-
-    const a =
-        Math.sin(
-            diferencaLat / 2
-        ) *
-        Math.sin(
-            diferencaLat / 2
-        ) +
-
-        Math.cos(radLat1) *
-        Math.cos(radLat2) *
-
-        Math.sin(
-            diferencaLon / 2
-        ) *
-        Math.sin(
-            diferencaLon / 2
-        );
-
-
-    const c =
-        2 *
-        Math.atan2(
-            Math.sqrt(a),
-            Math.sqrt(1 - a)
-        );
-
-
-    return R * c;
-
-}
-
-
-// ==========================================
-// VERIFICAR LOCALIZAÇÃO
-// ==========================================
-
-function verificarLocalizacao(
-    callback
-) {
-
-    if (!navigator.geolocation) {
-
-        callback(false);
-
-        return;
-    }
-
-
-    navigator.geolocation.getCurrentPosition(
-
-        (posicao) => {
-
-            const latitude =
-                posicao.coords.latitude;
-
-
-            const longitude =
-                posicao.coords.longitude;
-
-
-            const distancia =
-                calcularDistancia(
-
-                    latitude,
-                    longitude,
-
-                    ESCOLA.latitude,
-                    ESCOLA.longitude
-
-                );
-
-
-            console.log(
-                "Distância até a escola:",
-                Math.round(distancia),
-                "metros"
+        resposta = await fetch(caminho, {
+            method: dados === undefined ? "GET" : "POST",
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: dados === undefined ? { Accept: "application/json" } : {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-Token": estado.csrf,
+            },
+            body: dados === undefined ? undefined : JSON.stringify(dados),
+            signal: controlador.signal,
+        });
+        const retorno = await resposta.json().catch(() => null);
+        if (!retorno || typeof retorno !== "object" || Array.isArray(retorno)) {
+            throw new ErroRequisicao(
+                "O servidor respondeu em um formato inesperado. Confira se o novo backend está rodando.",
+                resposta.status,
             );
-
-
-            if (
-                distancia <=
-                ESCOLA.raio
-            ) {
-
-                callback(true);
-
-            } else {
-
-                callback(false);
-
-            }
-
-        },
-
-
-        (erro) => {
-
-            console.error(
-                "Erro ao obter localização:",
-                erro
-            );
-
-
-            callback(false);
-
-        },
-
-
-        {
-
-            enableHighAccuracy:
-                true,
-
-            timeout:
-                10000,
-
-            maximumAge:
-                0
-
         }
-
-    );
-
+        if (typeof retorno.csrf_token === "string") estado.csrf = retorno.csrf_token;
+        if (!resposta.ok) {
+            if (resposta.status === 401 && estado.aluno) {
+                limparSessao();
+                mensagem("mensagem-login", "Sua sessão terminou. Entre novamente.");
+            }
+            if (resposta.status === 404 && caminho === "/sessao") {
+                throw new ErroRequisicao(
+                    "O novo backend ainda não está pronto: falta a rota /sessao. Conclua o código da API.",
+                    404,
+                );
+            }
+            throw new ErroRequisicao(retorno.erro || "Não foi possível concluir a operação.", resposta.status);
+        }
+        return retorno;
+    } catch (erro) {
+        if (erro instanceof ErroRequisicao) throw erro;
+        throw new ErroRequisicao(erro.name === "AbortError"
+            ? "O servidor demorou para responder. Atualize os registros antes de tentar novamente."
+            : "Não foi possível conectar. Abra o site pelo servidor e confira se o backend está ligado.");
+    } finally {
+        clearTimeout(limite);
+    }
 }
 
-
-// ==========================================
-// CARREGAR TELA PRINCIPAL
-// ==========================================
-
-function carregarTelaPrincipal() {
-
-    document
-        .getElementById(
-            "nome-aluno"
-        )
-        .textContent =
-        aluno.nome ||
-        "Aluno";
-
-
-    atualizarStatus();
-
+function pararCamera() {
+    estado.cameraVersao += 1;
+    estado.cameraPronta = false;
+    if (estado.stream) estado.stream.getTracks().forEach((track) => track.stop());
+    estado.stream = null;
+    const camera = porId("camera");
+    if (camera.srcObject) {
+        camera.srcObject.getTracks().forEach((track) => track.stop());
+        camera.srcObject = null;
+    }
+    // Apaga o frame técnico após uso; não mantém uma foto no canvas.
+    porId("canvas-rosto").width = 0;
+    porId("canvas-rosto").height = 0;
 }
 
+function mostrarTela(id) {
+    if (id !== "tela-facial") pararCamera();
+    ["tela-login", "tela-cadastro", "tela-facial", "tela-principal"].forEach((tela) => {
+        porId(tela).classList.toggle("escondida", tela !== id);
+    });
+    estado.tela = id;
+    atualizarBotoes();
+}
 
-// ==========================================
-// ATUALIZAR STATUS E HISTÓRICO
-// ==========================================
+function registrosHoje() {
+    return estado.historico.filter((registro) => registro.data === estado.hoje);
+}
+
+function atualizarBotoes() {
+    const bloqueado = estado.ocupado;
+    ["btn-login", "btn-cadastrar"].forEach((id) => {
+        porId(id).disabled = bloqueado || !estado.sessaoConhecida;
+    });
+    ["btn-primeiro-acesso", "btn-voltar-login", "btn-atualizar-login",
+        "btn-sair", "btn-cancelar-facial", "btn-reabrir-camera",
+        "btn-atualizar", "btn-confirmar-saida"].forEach((id) => {
+        porId(id).disabled = bloqueado;
+    });
+    porId("btn-cadastrar-facial").disabled = bloqueado || !estado.cameraPronta;
+    const registros = registrosHoje();
+    const entrada = registros.some((registro) => registro.tipo === "entrada");
+    const saida = registros.some((registro) => registro.tipo === "saida");
+    const indisponivel = bloqueado || !estado.aluno || !estado.historicoCarregado;
+    porId("btn-entrada").disabled = indisponivel || entrada;
+    porId("btn-saida").disabled = indisponivel || !entrada || saida;
+}
+
+async function executar(idMensagem, acao) {
+    if (estado.ocupado) return;
+    estado.ocupado = true;
+    atualizarBotoes();
+    mensagem(idMensagem);
+    try {
+        await acao();
+    } catch (erro) {
+        const destino = {
+            "tela-login": "mensagem-login",
+            "tela-cadastro": "mensagem-cadastro",
+            "tela-facial": "mensagem-facial",
+            "tela-principal": "mensagem-principal",
+        }[estado.tela] || idMensagem;
+        mensagem(destino, erro.message || "Não foi possível concluir. Tente novamente.");
+    } finally {
+        estado.ocupado = false;
+        atualizarBotoes();
+    }
+}
+
+function limparSessao() {
+    estado.aluno = null;
+    estado.csrf = "";
+    estado.sessaoConhecida = false;
+    estado.historico = [];
+    estado.hoje = null;
+    estado.historicoCarregado = false;
+    estado.acaoFacial = null;
+    porId("login-senha").value = "";
+    porId("cadastro-senha").value = "";
+    mostrarTela("tela-login");
+}
+
+function dataBrasileira(data) {
+    const partes = data.split("-");
+    return partes.length === 3 ? partes.reverse().join("/") : data;
+}
+
+function horaCurta(hora) {
+    const partes = String(hora).split(":");
+    return partes.length >= 2 ? partes[0].padStart(2, "0") + ":" + partes[1] : String(hora);
+}
 
 function atualizarStatus() {
-
-    const statusEntrada =
-        document.getElementById(
-            "status-entrada"
-        );
-
-
-    const statusSaida =
-        document.getElementById(
-            "status-saida"
-        );
-
-    const btnEntrada =
-        document.getElementById(
-            "btn-entrada"
-        );
-
-    const btnSaida =
-        document.getElementById(
-            "btn-saida"
-        );
-
-
-    // ==========================================
-    // ENTRADA
-    // ==========================================
-
-    if (aluno.entrada) {
-
-        statusEntrada.textContent =
-            `Registrada às ${aluno.entrada}`;
-
-        if (btnEntrada) btnEntrada.disabled = true;
-
+    porId("nome-aluno").textContent = estado.aluno ? estado.aluno.nome : "Aluno";
+    const hoje = registrosHoje();
+    for (const tipo of ["entrada", "saida"]) {
+        const registro = hoje.find((item) => item.tipo === tipo);
+        porId("status-" + tipo).textContent = !estado.historicoCarregado
+            ? "Atualize os registros" : registro
+                ? "Registrada às " + horaCurta(registro.horario) : "Ainda não registrada";
+    }
+    const lista = porId("lista-historico");
+    lista.replaceChildren();
+    const notificacoes = {
+        pendente: "Aviso por e-mail na fila.",
+        enviando: "Aviso por e-mail em processamento.",
+        enviado: "Aviso aceito pelo servidor de e-mail.",
+        falhou: "Não foi possível enviar o aviso por e-mail. Avise a equipe.",
+    };
+    if (!estado.historicoCarregado || !estado.historico.length) {
+        const item = document.createElement("p");
+        item.textContent = estado.historicoCarregado
+            ? "Nenhum registro realizado." : "Não foi possível carregar os registros. Clique em Atualizar.";
+        lista.appendChild(item);
     } else {
-
-        statusEntrada.textContent =
-            "Ainda não registrada";
-
-        if (btnEntrada) btnEntrada.disabled = false;
-
+        estado.historico.forEach((registro) => {
+            const item = document.createElement("p");
+            item.className = "historico-item";
+            const tipo = registro.tipo === "entrada" ? "Entrada" : "Saída";
+            let texto = tipo + " registrada em " + dataBrasileira(registro.data)
+                + " às " + horaCurta(registro.horario) + ".";
+            if (registro.motivo_saida) texto += " Motivo: " + registro.motivo_saida + ".";
+            if (notificacoes[registro.notificacao]) texto += " " + notificacoes[registro.notificacao];
+            item.textContent = texto;
+            lista.appendChild(item);
+        });
     }
-
-
-    // ==========================================
-    // SAÍDA
-    // ==========================================
-
-    if (aluno.saida) {
-
-        statusSaida.textContent =
-            `Registrada às ${aluno.saida}`;
-
-        if (btnSaida) btnSaida.disabled = true;
-
-    } else {
-
-        statusSaida.textContent =
-            "Ainda não registrada";
-
-        if (btnSaida) btnSaida.disabled = false;
-
-    }
-
-
-    // ==========================================
-    // HISTÓRICO COMPLETO
-    // ==========================================
-
-    const listaHistorico =
-        document.getElementById(
-            "lista-historico"
-        );
-
-
-    if (listaHistorico) {
-
-        if (
-            aluno.historico &&
-            aluno.historico.length > 0
-        ) {
-
-            listaHistorico.innerHTML = "";
-
-
-            const historicoInvertido =
-                [
-                    ...aluno.historico
-                ].reverse();
-
-
-            historicoInvertido.forEach(
-                item => {
-
-                    const p =
-                        document.createElement(
-                            "p"
-                        );
-
-
-                    p.style.marginBottom =
-                        "8px";
-
-
-                    let texto = `${item.tipo} registrada em ${item.data} às ${item.hora}`;
-
-                    if (item.motivo) {
-                        texto += ` (Motivo: ${item.motivo})`;
-                    }
-
-                    p.textContent = texto;
-
-
-                    listaHistorico.appendChild(
-                        p
-                    );
-
-                }
-            );
-
-        } else {
-
-            listaHistorico.innerHTML =
-                "<p>Nenhum registro realizado.</p>";
-
-        }
-
-    }
-
+    atualizarBotoes();
 }
+
+async function carregarHistorico() {
+    if (!estado.aluno) return;
+    if (consultaHistorico) return consultaHistorico;
+    const alunoId = estado.aluno.id;
+    consultaHistorico = (async () => {
+        try {
+            const retorno = await api("/presencas");
+            if (!Array.isArray(retorno.presencas) || typeof retorno.hoje !== "string") {
+                throw new Error("O backend precisa retornar presencas e hoje na consulta do histórico.");
+            }
+            if (!estado.aluno || estado.aluno.id !== alunoId) return;
+            estado.historico = retorno.presencas;
+            estado.hoje = retorno.hoje;
+            estado.historicoCarregado = true;
+        } catch (erro) {
+            if (estado.aluno && estado.aluno.id === alunoId) estado.historicoCarregado = false;
+            throw erro;
+        } finally {
+            if (estado.aluno && estado.aluno.id === alunoId) atualizarStatus();
+        }
+    })();
+    try {
+        await consultaHistorico;
+    } finally {
+        consultaHistorico = null;
+    }
+}
+
+async function irParaConta() {
+    if (!estado.aluno.rosto_cadastrado) {
+        await prepararFacial("cadastro");
+        return;
+    }
+    mostrarTela("tela-principal");
+    await carregarHistorico();
+}
+
+async function restaurarSessao() {
+    const retorno = await api("/sessao");
+    if (!estado.csrf || !Object.hasOwn(retorno, "aluno")) {
+        throw new Error("O backend precisa retornar aluno e csrf_token na rota /sessao.");
+    }
+    estado.sessaoConhecida = true;
+    estado.aluno = retorno.aluno;
+    if (estado.aluno) await irParaConta();
+    else mostrarTela("tela-login");
+}
+
+function mensagemCamera(erro) {
+    if (erro.name === "NotAllowedError") return "Permita o acesso à câmera nas configurações do navegador.";
+    if (erro.name === "NotFoundError") return "Nenhuma câmera foi encontrada neste aparelho.";
+    if (erro.name === "NotReadableError") return "A câmera está ocupada. Feche outros aplicativos que a utilizam.";
+    return "Não foi possível iniciar a câmera. Tente abrir novamente.";
+}
+
+async function abrirCamera() {
+    pararCamera();
+    const versao = estado.cameraVersao;
+    mensagem("mensagem-facial", "Abrindo a câmera...", "info");
+    atualizarBotoes();
+    try {
+        if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+            throw new Error("Use HTTPS ou localhost para permitir o acesso à câmera.");
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false,
+        });
+        if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+        }
+        estado.stream = stream;
+        const camera = porId("camera");
+        camera.srcObject = stream;
+        await camera.play();
+        // Aguarda dados reais do vídeo antes de habilitar captura.
+        const iniciou = Date.now();
+        while (camera.readyState < 2 || !camera.videoWidth || !camera.videoHeight) {
+            if (versao !== estado.cameraVersao) return;
+            if (Date.now() - iniciou > 10000) throw new Error("A câmera demorou para iniciar. Tente abrir novamente.");
+            await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        if (versao !== estado.cameraVersao) return;
+        estado.cameraPronta = true;
+        mensagem("mensagem-facial", "Câmera pronta. Deixe somente seu rosto na imagem.", "sucesso");
+    } catch (erro) {
+        if (versao !== estado.cameraVersao) return;
+        pararCamera();
+        mensagem("mensagem-facial", erro.name === "Error" ? erro.message : mensagemCamera(erro));
+    } finally {
+        atualizarBotoes();
+    }
+}
+
+async function prepararFacial(tipo, motivo = "") {
+    estado.acaoFacial = { tipo, motivo };
+    porId("titulo-facial").textContent = tipo === "cadastro" ? "Cadastro facial"
+        : tipo === "entrada" ? "Confirmar entrada" : "Confirmar saída";
+    porId("subtitulo-facial").textContent = tipo === "cadastro"
+        ? "Cadastre seu rosto para verificar as próximas entradas e saídas."
+        : "Uma nova foto será comparada com seu cadastro. Permita também o acesso à localização.";
+    porId("btn-cadastrar-facial").textContent = tipo === "cadastro"
+        ? "Cadastrar meu rosto" : tipo === "entrada" ? "Confirmar minha entrada" : "Confirmar minha saída";
+    porId("btn-cancelar-facial").textContent = tipo === "cadastro" ? "Sair da conta" : "Cancelar";
+    mostrarTela("tela-facial");
+    // A permissão da câmera pode demorar: o usuário continua podendo cancelar.
+    void abrirCamera();
+}
+
+function capturarFoto() {
+    const camera = porId("camera");
+    if (!estado.cameraPronta || !camera.srcObject || camera.readyState < 2) {
+        throw new Error("Aguarde a câmera ficar pronta ou clique em Abrir câmera novamente.");
+    }
+    const escala = Math.min(1, 960 / Math.max(camera.videoWidth, camera.videoHeight));
+    const canvas = porId("canvas-rosto");
+    canvas.width = Math.round(camera.videoWidth * escala);
+    canvas.height = Math.round(camera.videoHeight * escala);
+    const contexto = canvas.getContext("2d");
+    if (!contexto) throw new Error("Este navegador não conseguiu capturar a imagem.");
+    contexto.drawImage(camera, 0, 0, canvas.width, canvas.height);
+    const imagem = canvas.toDataURL("image/jpeg", 0.85);
+    canvas.width = 0;
+    canvas.height = 0;
+    return imagem;
+}
+
+async function localizar() {
+    if (!window.isSecureContext || !navigator.geolocation) {
+        throw new Error("Use HTTPS ou localhost em um navegador com acesso à localização.");
+    }
+    return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+        (posicao) => resolve({
+            latitude: posicao.coords.latitude,
+            longitude: posicao.coords.longitude,
+            precisao: posicao.coords.accuracy,
+        }),
+        (erro) => reject(new Error(erro.code === 1
+            ? "Permita o acesso à localização nas configurações do navegador."
+            : erro.code === 3 ? "A localização demorou. Ative o GPS e tente novamente."
+                : "Não foi possível obter a localização. Ative o GPS e tente novamente.")),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    ));
+}
+
+async function sair() {
+    // A câmera para imediatamente, mesmo se o servidor estiver indisponível.
+    pararCamera();
+    await api("/logout", {});
+    const token = estado.csrf;
+    limparSessao();
+    estado.csrf = token;
+    estado.sessaoConhecida = true;
+    porId("login-ra").value = "";
+    mensagem("mensagem-login", "Você saiu da conta.", "info");
+}
+
+for (const id of ["login-ra", "cadastro-ra"]) {
+    porId(id).addEventListener("input", (evento) => {
+        evento.target.value = normalizarRA(evento.target.value);
+    });
+}
+porId("responsavel-telefone").addEventListener("input", (evento) => {
+    const numero = evento.target.value.replace(/\D/g, "").slice(0, 11);
+    const restante = numero.slice(2);
+    evento.target.value = numero.length <= 2 ? numero
+        : "(" + numero.slice(0, 2) + ") " + (restante.length > 4
+            ? restante.slice(0, -4) + "-" + restante.slice(-4) : restante);
+});
+
+porId("btn-primeiro-acesso").addEventListener("click", () => {
+    porId("cadastro-ra").value = normalizarRA(porId("login-ra").value);
+    porId("cadastro-senha").value = "";
+    mensagem("mensagem-cadastro");
+    mostrarTela("tela-cadastro");
+});
+porId("btn-voltar-login").addEventListener("click", () => {
+    porId("cadastro-senha").value = "";
+    mostrarTela("tela-login");
+});
+porId("btn-atualizar-login").addEventListener("click", () => {
+    void executar("mensagem-login", restaurarSessao);
+});
+
+porId("btn-login").addEventListener("click", () => {
+    void executar("mensagem-login", async () => {
+        const RA = validarRA(porId("login-ra").value);
+        const senha = porId("login-senha").value;
+        if (!senha) throw new Error("Preencha sua senha.");
+        const retorno = await api("/login", { RA, senha });
+        if (!retorno.aluno) throw new Error("O backend não retornou os dados do aluno.");
+        estado.aluno = retorno.aluno;
+        porId("login-senha").value = "";
+        await irParaConta();
+    });
+});
+porId("login-senha").addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter" && !porId("btn-login").disabled) porId("btn-login").click();
+});
+
+porId("btn-cadastrar").addEventListener("click", () => {
+    void executar("mensagem-cadastro", async () => {
+        const dados = {
+            nome: porId("cadastro-nome").value.trim(),
+            email: porId("cadastro-email").value.trim(),
+            RA: validarRA(porId("cadastro-ra").value),
+            senha: porId("cadastro-senha").value,
+            nome_responsavel: porId("responsavel-nome").value.trim(),
+            telefone_responsavel: porId("responsavel-telefone").value.replace(/\D/g, ""),
+            email_responsavel: porId("responsavel-email").value.trim(),
+        };
+        if (dados.nome.length < 3 || dados.nome_responsavel.length < 3) {
+            throw new Error("Preencha o nome do aluno e do responsável.");
+        }
+        if (![dados.email, dados.email_responsavel].every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+            throw new Error("Confira o e-mail do aluno e do responsável.");
+        }
+        if (!/^\d{10,11}$/.test(dados.telefone_responsavel)) throw new Error("Informe o telefone com DDD.");
+        if (dados.senha.trim().length < 8 || dados.senha.length > 128) {
+            throw new Error("Crie uma senha com 8 a 128 caracteres.");
+        }
+        const retorno = await api("/alunos", dados);
+        if (!retorno.aluno) throw new Error("O backend não retornou os dados do cadastro.");
+        estado.aluno = retorno.aluno;
+        porId("cadastro-senha").value = "";
+        await irParaConta();
+    });
+});
+
+porId("btn-entrada").addEventListener("click", () => {
+    void executar("mensagem-principal", async () => {
+        await carregarHistorico();
+        if (registrosHoje().some((item) => item.tipo === "entrada")) {
+            throw new Error("Sua entrada já foi registrada hoje.");
+        }
+        await prepararFacial(estado.aluno.rosto_cadastrado ? "entrada" : "cadastro");
+    });
+});
+porId("btn-saida").addEventListener("click", () => {
+    void executar("mensagem-principal", async () => {
+        await carregarHistorico();
+        const hoje = registrosHoje();
+        if (!hoje.some((item) => item.tipo === "entrada")) throw new Error("Registre sua entrada primeiro.");
+        if (hoje.some((item) => item.tipo === "saida")) throw new Error("Sua saída já foi registrada hoje.");
+        porId("campo-motivo-saida").classList.remove("escondida");
+        mensagem("mensagem-principal", "Informe o motivo se for uma saída antecipada e continue para a câmera.", "info");
+        porId("motivo-saida").focus();
+    });
+});
+porId("btn-confirmar-saida").addEventListener("click", () => {
+    const motivo = porId("motivo-saida").value.trim();
+    if (motivo.length > 500) {
+        mensagem("mensagem-principal", "O motivo deve ter até 500 caracteres.");
+        return;
+    }
+    void prepararFacial("saida", motivo);
+});
+
+porId("btn-cadastrar-facial").addEventListener("click", () => {
+    void executar("mensagem-facial", async () => {
+        const acao = estado.acaoFacial;
+        if (!acao || !estado.aluno) throw new Error("Entre na conta para continuar.");
+        if (acao.tipo === "cadastro") {
+            const imagem = capturarFoto();
+            mensagem("mensagem-facial", "Verificando o cadastro facial...", "info");
+            await api("/rosto", { imagem });
+            estado.aluno.rosto_cadastrado = true;
+            mostrarTela("tela-principal");
+            await carregarHistorico();
+            mensagem("mensagem-principal", "Rosto cadastrado. Agora você pode registrar a entrada.", "sucesso");
+            return;
+        }
+        mensagem("mensagem-facial", "Verificando a localização...", "info");
+        const coordenadas = await localizar();
+        // Captura após obter a localização: não reutiliza a imagem do cadastro.
+        const imagem = capturarFoto();
+        mensagem("mensagem-facial", "Conferindo o rosto e registrando...", "info");
+        let retorno;
+        try {
+            retorno = await api("/presenca", {
+                tipo: acao.tipo,
+                ...coordenadas,
+                imagem,
+                motivo_saida: acao.tipo === "saida" ? acao.motivo : "",
+            });
+        } catch (erro) {
+            if (estado.aluno) {
+                mostrarTela("tela-principal");
+                if (acao.tipo === "saida") porId("campo-motivo-saida").classList.remove("escondida");
+                try { await carregarHistorico(); } catch { /* Mantém as ações bloqueadas se a consulta falhar. */ }
+                mensagem("mensagem-principal", erro.message);
+            }
+            return;
+        }
+        mostrarTela("tela-principal");
+        porId("campo-motivo-saida").classList.add("escondida");
+        porId("motivo-saida").value = "";
+        // Não anuncia envio: neste momento o e-mail pode estar apenas na fila.
+        const aviso = retorno.notificacao === "pendente" ? " O aviso por e-mail está na fila." : "";
+        try {
+            await carregarHistorico();
+            mensagem("mensagem-principal", retorno.mensagem + aviso, "sucesso");
+        } catch (erro) {
+            mensagem("mensagem-principal", retorno.mensagem + aviso + " " + erro.message);
+        }
+    });
+});
+
+porId("btn-reabrir-camera").addEventListener("click", () => { void abrirCamera(); });
+porId("btn-cancelar-facial").addEventListener("click", () => {
+    if (estado.acaoFacial?.tipo === "cadastro") {
+        void executar("mensagem-facial", sair);
+    } else {
+        mostrarTela("tela-principal");
+        estado.acaoFacial = null;
+    }
+});
+porId("btn-sair").addEventListener("click", () => { void executar("mensagem-principal", sair); });
+porId("btn-atualizar").addEventListener("click", () => {
+    void executar("mensagem-principal", async () => {
+        await carregarHistorico();
+        mensagem("mensagem-principal", "Registros atualizados.", "sucesso");
+    });
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        pararCamera();
+        if (estado.tela === "tela-facial") {
+            mensagem("mensagem-facial", "A câmera foi pausada. Clique em Abrir câmera novamente.", "info");
+            atualizarBotoes();
+        }
+    } else if (estado.aluno && estado.tela === "tela-principal" && !estado.ocupado) {
+        void executar("mensagem-principal", carregarHistorico);
+    }
+});
+window.addEventListener("pagehide", pararCamera);
+// Reconsulta datas e situação do e-mail; a data de hoje sempre vem do servidor.
+setInterval(() => {
+    if (!document.hidden && estado.aluno && estado.tela === "tela-principal" && !estado.ocupado) {
+        void executar("mensagem-principal", carregarHistorico);
+    }
+}, 60000);
+
+void executar("mensagem-login", async () => {
+    if (window.location.protocol === "file:") {
+        throw new Error("Não abra o HTML direto. Ligue o backend e abra http://127.0.0.1:5000.");
+    }
+    await restaurarSessao();
+});

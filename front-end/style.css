@@ -205,6 +205,11 @@ button:disabled {
     cursor: not-allowed;
 }
 
+button:disabled, .botao-principal:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 /* Botão principal (azul forte) */
 .botao-principal {
     width: 100%;
@@ -247,7 +252,8 @@ button:disabled {
 .botao-teste {
     border-style: dashed;
     color: var(--subtext);
-    font-weight: 400;
+    font-weight: 600;
+    margin-top: 220px;
 }
 
 /* Botão que parece um link de texto */
@@ -287,8 +293,8 @@ button:disabled {
 .opcoes {
     display: grid;
     gap: 12px;
-    margin-top: 20px;
-    padding-top: 20px;
+    margin-top: 10px;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
 }
 

@@ -347,11 +347,21 @@ function horarioEntradaPermitido() {
 function atualizarBotoes() {
     const bloqueado = estado.ocupado;
     
+    // Verifica se o checkbox de termos do login está marcado
+    const checkboxTermos = porId("aceite-termos-login");
+    const termosAceitos = checkboxTermos ? checkboxTermos.checked : false;
+    
     // Configurações básicas de outros botões
-    ["btn-login", "btn-cadastrar"].forEach((id) => {
-        const el = porId(id);
-        if (el) el.disabled = bloqueado || !estado.sessaoConhecida;
-    });
+    // O botão de login agora também exige 'termosAceitos'
+    const btnLoginEl = porId("btn-login");
+    if (btnLoginEl) {
+        btnLoginEl.disabled = bloqueado || !estado.sessaoConhecida || !termosAceitos;
+    }
+
+    const btnCadastrarEl = porId("btn-cadastrar");
+    if (btnCadastrarEl) {
+        btnCadastrarEl.disabled = bloqueado || !estado.sessaoConhecida;
+    }
     
     ["btn-primeiro-acesso", "btn-voltar-login", "btn-esqueceu-senha",
         "btn-voltar-login-recuperar", "btn-enviar-recuperacao", "btn-atualizar-login",
@@ -1063,6 +1073,15 @@ if (btnAtalhoTeste) {
             estado.aluno = { id: 999, nome: "Aluno Teste (Atalho)", rosto_cadastrado: true };
             await irParaConta();
         });
+    });
+}
+
+
+// Ouve alterações no checkbox de termos da tela de login para habilitar/desativar o botão Entrar
+const checkboxTermosLogin = porId("aceite-termos-login");
+if (checkboxTermosLogin) {
+    checkboxTermosLogin.addEventListener("change", () => {
+        atualizarBotoes();
     });
 }
 

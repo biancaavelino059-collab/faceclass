@@ -1,41 +1,61 @@
+/* ==========================================================================
+   1. CORES E CONFIGURAÇÕES GLOBAIS
+   ========================================================================== */
+
+/* Zera as margens e paddings padrão de todos os elementos */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Variáveis de cores e tamanhos usados no sistema */
 :root {
-    /* --success e --danger são usadas diretamente pelo script.js: não renomear */
     --primary: #1d4f91;
     --primary-dark: #153c70;
     --background: #e9ebef;
+    --surface: #f5f6f8;
     --white: #ffffff;
+
     --text: #1f2328;
     --subtext: #596069;
+    --placeholder: #8b929c;
     --border: #cdd2d9;
+    --field-border: #aeb5bf;
+
+    /* ATENÇÃO: --success e --danger são usadas pelo arquivo script.js (não mude os nomes!) */
     --success: #1e7a46;
     --danger: #b3261e;
 
-    --surface: #f5f6f8;
-    --field-border: #aeb5bf;
     --radius: 4px;
     --focus-ring: 0 0 0 3px rgba(29, 79, 145, 0.25);
 }
 
+/* Estilo geral da página */
 body {
-    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
     background: var(--background);
     color: var(--text);
-    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
     line-height: 1.45;
-    -webkit-font-smoothing: antialiased;
 }
+
+/* Classe que o script.js usa para esconder telas ou campos */
+.escondida {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   2. ESTRUTURA E LAYOUT (TELA E TOPO)
+   ========================================================================== */
 
 #app {
     width: 100%;
     min-height: 100vh;
 }
 
+/* Caixa principal que imita o formato de celular */
 .tela {
     width: 100%;
     max-width: 480px;
@@ -44,13 +64,12 @@ body {
     background: var(--white);
 }
 
-/* O script.js mostra/esconde telas e o campo de motivo com esta classe */
-.escondida {
-    display: none !important;
+/* Espaçamento interno das telas */
+.conteudo {
+    padding: 32px 24px 40px;
 }
 
-/* BARRA SUPERIOR */
-
+/* Barra azul no topo da página */
 .topbar {
     display: flex;
     align-items: center;
@@ -67,40 +86,16 @@ body {
     font-weight: 600;
 }
 
-.botao-sair {
-    height: 32px;
-    padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, 0.55);
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--white);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-}
 
-.botao-sair:hover {
-    background: rgba(255, 255, 255, 0.14);
-}
-
-.topbar button:focus-visible {
-    outline-color: var(--white);
-}
-
-.conteudo {
-    padding: 32px 24px 40px;
-}
-
-/* TEXTOS */
+/* ==========================================================================
+   3. TEXTOS E TÍTULOS
+   ========================================================================== */
 
 h1 {
+    margin-bottom: 6px;
     font-size: 24px;
     font-weight: 600;
     line-height: 1.25;
-    margin-bottom: 6px;
-    overflow-wrap: anywhere;
 }
 
 h2 {
@@ -109,10 +104,10 @@ h2 {
 }
 
 .subtitulo {
+    margin-bottom: 28px;
     color: var(--subtext);
     font-size: 15px;
     line-height: 1.55;
-    margin-bottom: 28px;
 }
 
 .topo {
@@ -125,13 +120,23 @@ h2 {
 }
 
 .dica {
+    margin-bottom: 18px;
     color: var(--subtext);
     font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 18px;
 }
 
-/* GRUPOS DE CAMPOS (tela de cadastro) */
+/* Mensagens de erro ou aviso */
+.mensagem {
+    min-height: 20px;
+    margin-top: 12px;
+    color: var(--danger);
+    font-size: 14px;
+}
+
+
+/* ==========================================================================
+   4. CAMPOS DE DIGITAÇÃO (INPUTS E TEXTAREAS)
+   ========================================================================== */
 
 .grupo {
     margin-bottom: 8px;
@@ -143,65 +148,64 @@ h2 {
     border-bottom: 1px solid var(--border);
 }
 
-/* CAMPOS */
-
 .campo {
     margin-bottom: 18px;
 }
 
 .campo label {
     display: block;
+    margin-bottom: 6px;
     font-size: 14px;
     font-weight: 600;
-    margin-bottom: 6px;
 }
 
-/* 16px evita o zoom automático ao focar o campo no iPhone */
-.campo input {
+/* Caixa de texto e campos de input (tamanho 16px evita zoom automático no iPhone) */
+.campo input,
+.campo textarea {
     width: 100%;
-    height: 44px;
-    padding: 0 12px;
-    background: var(--white);
-    color: var(--text);
     border: 1px solid var(--field-border);
     border-radius: var(--radius);
-    outline: none;
+    background: var(--white);
+    color: var(--text);
     font-family: inherit;
     font-size: 16px;
+    outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.campo input {
+    height: 44px;
+    padding: 0 12px;
+}
+
+.campo textarea {
+    padding: 10px 12px;
+    resize: vertical;
 }
 
 .campo input::placeholder,
 .campo textarea::placeholder {
-    color: #8b929c;
+    color: var(--placeholder);
 }
 
-.campo input:focus {
-    border-color: var(--primary);
-    box-shadow: var(--focus-ring);
-}
-
-.campo textarea {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--white);
-    color: var(--text);
-    border: 1px solid var(--field-border);
-    border-radius: var(--radius);
-    font: inherit;
-    font-size: 16px;
-    resize: vertical;
-    transition: border-color 0.15s, box-shadow 0.15s;
-}
-
+/* Efeito quando clica para digitar */
+.campo input:focus,
 .campo textarea:focus {
-    outline: none;
     border-color: var(--primary);
     box-shadow: var(--focus-ring);
 }
 
-/* BOTÕES */
 
+/* ==========================================================================
+   5. BOTÕES
+   ========================================================================== */
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Botão principal (azul forte) */
 .botao-principal {
     width: 100%;
     height: 46px;
@@ -220,6 +224,7 @@ h2 {
     background: var(--primary-dark);
 }
 
+/* Botão secundário (branco com borda) */
 .botao-secundario {
     width: 100%;
     height: 42px;
@@ -238,16 +243,17 @@ h2 {
     background: var(--surface);
 }
 
+/* Botão tracejado para modo de teste */
 .botao-teste {
     border-style: dashed;
     color: var(--subtext);
     font-weight: 400;
 }
 
+/* Botão que parece um link de texto */
 .botao-texto {
     padding: 4px 8px;
     border: none;
-    border-radius: var(--radius);
     background: transparent;
     color: var(--primary);
     font-family: inherit;
@@ -260,42 +266,48 @@ h2 {
     text-decoration: underline;
 }
 
-button:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
+/* Botão de sair na barra de cima */
+.botao-sair {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
+.botao-sair:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* Espaço onde ficam os botões no fim das telas */
 .opcoes {
     display: grid;
-    gap: 100px;
-    margin-top: 0px;
-    padding-top: 0px;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
     border-top: 1px solid var(--border);
 }
 
-/* MENSAGENS (o script.js define a cor de cada mensagem) */
 
-.mensagem {
-    min-height: 20px;
-    margin-top: 12px;
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--danger);
-}
-
-/* CÂMERA */
+/* ==========================================================================
+   6. CÂMERA E TELAS ESPECIAIS
+   ========================================================================== */
 
 .camera-area {
     position: relative;
-    width: 100%;
-    height: 340px;
-    border-radius: var(--radius);
-    background: #15171d;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    width: 100%;
+    height: 340px;
     margin-bottom: 14px;
+    border-radius: var(--radius);
+    background: #15171d;
+    overflow: hidden;
 }
 
 #camera {
@@ -305,7 +317,7 @@ button:disabled {
     transform: scaleX(-1);
 }
 
-/* Guia oval para posicionar o rosto (só visual, não interfere na captura) */
+/* Desenho oval para guiar o rosto na câmera */
 .camera-area::after {
     content: "";
     position: absolute;
@@ -320,8 +332,7 @@ button:disabled {
     pointer-events: none;
 }
 
-/* TELA PRINCIPAL */
-
+/* Blocos de status e histórico */
 .status-card,
 .ultimo-registro {
     border: 1px solid var(--border);
@@ -331,6 +342,10 @@ button:disabled {
 
 .status-card {
     margin-bottom: 20px;
+}
+
+.ultimo-registro {
+    margin-top: 24px;
 }
 
 .status-card h2,
@@ -343,11 +358,17 @@ button:disabled {
     padding: 12px 16px;
 }
 
+.cartao-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px 6px 16px;
+}
+
 .registro {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
     padding: 12px 16px;
 }
 
@@ -363,9 +384,18 @@ button:disabled {
 .registro strong {
     font-size: 14px;
     font-weight: 600;
-    text-align: right;
 }
 
+#lista-historico p {
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+#lista-historico p + p {
+    border-top: 1px solid var(--border);
+}
+
+/* Botões de entrada e saída grande */
 .acoes {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -376,15 +406,12 @@ button:disabled {
     width: 100%;
     min-height: 52px;
     padding: 8px 12px;
-    border: 1px solid transparent;
     border-radius: var(--radius);
     color: var(--white);
-    font-family: inherit;
     font-size: 15px;
     font-weight: 600;
-    line-height: 1.2;
     cursor: pointer;
-    transition: filter 0.15s;
+    border: none;
 }
 
 .botao-acao.entrada {
@@ -402,49 +429,15 @@ button:disabled {
 #campo-motivo-saida {
     margin-top: 12px;
     padding: 16px;
-    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    background: var(--surface);
 }
 
-.ultimo-registro {
-    margin-top: 24px;
-}
 
-.cartao-topo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 6px 8px 6px 16px;
-}
-
-#lista-historico p {
-    padding: 12px 16px;
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-#lista-historico p + p {
-    border-top: 1px solid var(--border);
-}
-
-/* ACESSIBILIDADE */
-
-button:focus-visible {
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition: none !important;
-    }
-}
-
-/* DESKTOP */
+/* ==========================================================================
+   7. TELAS GRANDES (COMPUTADOR)
+   ========================================================================== */
 
 @media (min-width: 481px) {
     body {
@@ -455,8 +448,8 @@ button:focus-visible {
     .tela {
         min-height: calc(100vh - 64px);
         margin: 32px auto;
-        overflow: hidden;
         border: 1px solid var(--border);
         border-radius: 6px;
+        overflow: hidden;
     }
 }

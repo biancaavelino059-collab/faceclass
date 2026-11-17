@@ -83,8 +83,8 @@ function validarRA(valor) {
 // Exige o RA completo (12 números + 1 dígito = 13 números) - usado no login
 function validarRACompleto(valor) {
     const ra = normalizarRA(valor);
-    if (!/^\d{13}$/.test(ra)) {
-        throw new Error("Preencha o RA completo (12 números + dígito).");
+    if (!/^\d{13}[0-9A-Z]$/.test(ra)) {
+        throw new Error(`Preencha o RA completo. Ex.: 1234567890123-4`);
     }
     return ra;
 }
@@ -814,6 +814,98 @@ if (btnAtualizar) {
         });
     });
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                ⚠️ ⚠️ o codigo a baixo é responsável por separar o digito do RA / serara o DDD do telefone ⚠️ ⚠️
+//                                                POR FAVOR, N MEXER SEM AUTORIZACAO
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Função para aplicar a máscara de RA dinamicamente
+function aplicarMascaraRA(event) {
+    let input = event.target;
+    let valor = input.value.toUpperCase().replace(/[^0-9A-Z]/g, ""); 
+    
+    const tamanhoMaximo = 13; 
+
+    if (valor.length > tamanhoMaximo) {
+        let corpo = valor.substring(0, tamanhoMaximo);
+        let digito = valor.substring(tamanhoMaximo, tamanhoMaximo + 1);
+        input.value = corpo + "-" + digito;
+    } else {
+        input.value = valor;
+    }
+}
+
+// Lista com o ID de todos os campos de RA do seu sistema e aplicação da máscara
+const idsCamposRA = ["login-ra", "cadastro-ra", "recuperar-ra",];
+
+idsCamposRA.forEach((id) => {
+    const campo = porId(id);
+    if (campo) {
+        campo.addEventListener("input", aplicarMascaraRA);
+    }
+});
+
+// Função para formatar o telefone com DDD entre parênteses e o hífen
+function aplicarMascaraTelefone(event) {
+    let input = event.target;
+    let valor = input.value.replace(/\D/g, ""); // Remove tudo que não for número
+    
+    // Limita a 11 dígitos no total (2 do DDD + 9 do número)
+    if (valor.length > 11) {
+        valor = valor.substring(0, 11);
+    }
+
+    // Aplica a formatação dinamicamente conforme o utilizador digita
+    if (valor.length > 7) {
+        // Exemplo: (11) 91234-567
+        let ddd = valor.substring(0, 2);
+        let parte1 = valor.substring(2, 7);
+        let parte2 = valor.substring(7, 11);
+        input.value = `(${ddd}) ${parte1}-${parte2}`;
+    } else if (valor.length > 2) {
+        // Exemplo: (11) 9123
+        let ddd = valor.substring(0, 2);
+        let parte1 = valor.substring(2);
+        input.value = `(${ddd}) ${parte1}`;
+    } else if (valor.length > 0) {
+        // Exemplo: (11
+        input.value = `(${valor}`;
+    } else {
+        input.value = "";
+    }
+}
+
+// Lista com o ID de todos os campos de telefone do seu sistema
+const idsCamposTelefone = ["responsavel-telefone"]; // Adicione mais IDs aqui se tiver outros campos de telefone
+
+idsCamposTelefone.forEach((id) => {
+    const campo = porId(id);
+    if (campo) {
+        campo.addEventListener("input", aplicarMascaraTelefone);
+    }
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//       ⚠️ ⚠️ O CODIGO ACIMA É RESPONSÁVEL POR SEPARAR O DIGITO DO RA E O DDD DO TELEFONE, NAO MEXER SEM AUTORIZACAO ⚠️ ⚠️
+//                  
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// Botão de Pular Tela (Modo Teste / Aluno Teste)
+const btnAtalhoTeste = porId("btn-atalho-teste");
+if (btnAtalhoTeste) {
+    btnAtalhoTeste.addEventListener("click", () => {
+        void executar("mensagem-login", async () => {
+            // Define um aluno de teste fictício para liberar a interface
+            estado.aluno = { id: 999, nome: "Aluno Teste (Atalho)", rosto_cadastrado: true };
+            await irParaConta();
+        });
+    });
+}
+
+
 
 
 /* =================================================================

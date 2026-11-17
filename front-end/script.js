@@ -25,6 +25,7 @@ const estado = {
 
 let consultaHistorico = null;
 let intervaloDeteccao = null;
+let modoDesenvolvimento = false;
 
 
 /* =================================================================
@@ -293,6 +294,7 @@ function registrosHoje() {
 
 // Verifica se ainda está dentro do horário permitido para entrada
 function horarioEntradaPermitido() {
+    if (modoDesenvolvimento) return true;
     const agora = new Date();
     const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
 
@@ -538,10 +540,42 @@ function capturarFoto() {
     return canvas.toDataURL("image/jpeg", 0.85);
 }
 
-// Pega a localização do GPS (simulada para testes)
+
+// Obtém a localização real do aluno pelo navegador
 async function localizar() {
-    return { latitude: 0, longitude: 0, precisao: 1 };
+    if (!navigator.geolocation) {
+        throw new Error("Seu navegador não suporta localização.");
+    }
+
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            (posicao) => {
+                resolve({
+                    latitude: posicao.coords.latitude,
+                    longitude: posicao.coords.longitude,
+                    precisao: posicao.coords.accuracy
+                });
+            },
+            (erro) => {
+                if (erro.code === erro.PERMISSION_DENIED) {
+                    reject(new Error("Você precisa permitir o acesso à localização."));
+                } else if (erro.code === erro.POSITION_UNAVAILABLE) {
+                    reject(new Error("Não foi possível identificar sua localização."));
+                } else if (erro.code === erro.TIMEOUT) {
+                    reject(new Error("O tempo para obter a localização terminou. Tente novamente."));
+                } else {
+                    reject(new Error("Erro ao obter sua localização."));
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    });
 }
+
 
 // Sai da conta do aluno
 async function sair() {
@@ -952,6 +986,8 @@ const btnAtalhoTeste = porId("btn-atalho-teste");
 if (btnAtalhoTeste) {
     btnAtalhoTeste.addEventListener("click", () => {
         void executar("mensagem-login", async () => {
+            modoDesenvolvimento = true;
+
             // Define um aluno de teste fictício para liberar a interface
             estado.aluno = { id: 999, nome: "Aluno Teste (Atalho)", rosto_cadastrado: true };
             await irParaConta();

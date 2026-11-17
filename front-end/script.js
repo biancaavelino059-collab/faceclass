@@ -290,7 +290,19 @@ function registrosHoje() {
     return estado.historico.filter((registro) => registro.data === estado.hoje);
 }
 
+
+// Verifica se ainda está dentro do horário permitido para entrada
+function horarioEntradaPermitido() {
+    const agora = new Date();
+    const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+
+    // Permite registrar até 07h30, inclusive
+    return minutosAtuais <= (7 * 60 + 30);
+}
+
+
 // Libera ou bloqueia os botões dependendo do que o aluno está a fazer
+
 function atualizarBotoes() {
     const bloqueado = estado.ocupado;
     ["btn-login", "btn-cadastrar"].forEach((id) => {
@@ -314,8 +326,25 @@ function atualizarBotoes() {
     
     const btnEntrada = porId("btn-entrada");
     const btnSaida = porId("btn-saida");
-    if (btnEntrada) btnEntrada.disabled = indisponivel || entrada;
-    if (btnSaida) btnSaida.disabled = indisponivel || !entrada || saida;
+
+const horarioPermitido = horarioEntradaPermitido();
+
+if (btnEntrada) {
+    btnEntrada.disabled = indisponivel || entrada || !horarioPermitido;
+}
+
+if (btnSaida) {
+    btnSaida.disabled = indisponivel || !entrada || saida;
+}
+
+if (!horarioPermitido && !entrada && estado.aluno) {
+    mensagem(
+        "mensagem-principal",
+        "Horário encerrado! O registro de entrada só é permitido até 07h30.",
+        "erro"
+    );
+}
+
 }
 
 // Executa uma ação na tela mostrando um aviso de "carregando" se precisar
@@ -723,8 +752,22 @@ const btnEntrada = porId("btn-entrada");
 if (btnEntrada) {
     btnEntrada.addEventListener("click", () => {
         void executar("mensagem-principal", async () => {
-            await carregarHistorico();
-            await prepararFacial("entrada");
+            
+if (!horarioEntradaPermitido()) {
+    throw new Error(
+        "Horário encerrado! Não é mais possível registrar entrada após 07h30."
+    );
+}
+
+await carregarHistorico();
+
+if (!horarioEntradaPermitido()) {
+    throw new Error(
+        "O horário de registro terminou. O limite é 07h30."
+    );
+}
+
+await prepararFacial("entrada");
         });
     });
 }
@@ -773,6 +816,17 @@ if (btnCadastrarFacial) {
             if (!foto) {
                 throw new Error("Não foi possível capturar a imagem do seu rosto.");
             }
+
+            
+if (
+    estado.acaoFacial?.tipo === "entrada" &&
+    !horarioEntradaPermitido()
+) {
+    throw new Error(
+        "Horário encerrado! A entrada deveria ter sido registrada até 07h30."
+    );
+}
+
 
             const acao = estado.acaoFacial || { tipo: "entrada" };
             const rota = acao.tipo === "cadastro" ? "/rosto" : "/presenca";

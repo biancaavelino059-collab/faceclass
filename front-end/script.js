@@ -50,6 +50,52 @@ function mensagem(id, texto = "", tipo = "erro") {
 
 
 /* =================================================================
+   2.1 SISTEMA DE COOKIES E TERMOS DE SEGURANÇA
+   ================================================================= */
+
+// Cria um cookie com validade em dias e proteção SameSite
+function definirCookie(nome, valor, dias = 180) {
+    const data = new Date();
+    data.setTime(data.getTime() + dias * 24 * 60 * 60 * 1000);
+    const expira = "expires=" + data.toUTCString();
+    document.cookie = `${nome}=${encodeURIComponent(valor)};${expira};path=/;SameSite=Lax`;
+}
+
+// Lê o valor de um cookie específico pelo nome
+function lerCookie(nome) {
+    const chave = nome + "=";
+    const partes = document.cookie.split(";");
+    for (let item of partes) {
+        item = item.trim();
+        if (item.indexOf(chave) === 0) {
+            return decodeURIComponent(item.substring(chave.length));
+        }
+    }
+    return null;
+}
+
+// Verifica se o usuário já aceitou os cookies; se não, exibe o banner
+function verificarConsentimentoCookies() {
+    const banner = porId("banner-cookies");
+    if (!banner) return;
+
+    const consentimento = lerCookie("controle_escolar_cookies");
+    if (consentimento === "aceito") {
+        banner.classList.add("escondida");
+    } else {
+        banner.classList.remove("escondida");
+    }
+}
+
+// Abre ou fecha o modal de Termos de Segurança
+function alternarModalTermos(abrir) {
+    const modal = porId("modal-termos");
+    if (!modal) return;
+    modal.classList.toggle("escondida", !abrir);
+}
+
+
+/* =================================================================
    3. FORMATAÇÃO, VALIDAÇÃO E DESTAQUE DE ERROS NOS CAMPOS
    ================================================================= */
 
@@ -80,33 +126,13 @@ function validarRA(valor) {
     return ra;
 }
 
-// Exige o RA completo (12 números + 1 dígito = 13 números) - usado no login
+// Exige o RA completo (13 números + 1 dígito) - usado no login
 function validarRACompleto(valor) {
     const ra = normalizarRA(valor);
     if (!/^\d{13}[0-9A-Z]$/.test(ra)) {
         throw new Error(`Preencha o RA completo. Ex.: 1234567890123-4`);
     }
     return ra;
-}
-
-// Função para formatar o RA colocando o hífen apenas quando todos os dígitos forem preenchidos
-function aplicarMascaraRA(event) {
-    let input = event.target;
-    let valor = input.value.replace(/\D/g, ""); // Remove tudo que não for número
-    
-    // Tamanho total do RA completo sem o hífen (13 dígitos: 12 números + 1 dígito)
-    const tamanhoMaximo = 13; 
-
-    // Se atingiu o tamanho máximo, aplica o hífen separando o último dígito
-    if (valor.length >= tamanhoMaximo) {
-        valor = valor.substring(0, tamanhoMaximo); // Garante que não passe do limite
-        let corpo = valor.slice(0, -1);
-        let digito = valor.slice(-1);
-        input.value = corpo + "-" + digito;
-    } else {
-        // Enquanto estiver digitando e não completar, exibe apenas os números normais sem hífen
-        input.value = valor;
-    }
 }
 
 // Muda o formato da data de ano-mes-dia para dia/mes/ano
@@ -123,7 +149,7 @@ function horaCurta(hora) {
     return partes.length >= 2 ? partes[0].padStart(2, "0") + ":" + partes[1] : String(hora);
 }
 
-// Limpa todas as bordas vermelhas dos campos de cadastro
+// Limpa todas as bordas vermelhas dos campos de cadastro e desmarca os termos
 function limparErrosCadastro() {
     const idsCampos = [
         "cadastro-nome", "cadastro-email", "cadastro-ra", "cadastro-senha",
@@ -133,6 +159,8 @@ function limparErrosCadastro() {
         const campo = porId(id);
         if (campo) campo.style.borderColor = "";
     });
+    const aceiteTermos = porId("aceite-termos");
+    if (aceiteTermos) aceiteTermos.checked = false;
 }
 
 // Pinta a borda de um campo específico de vermelho para indicar erro
@@ -212,47 +240,58 @@ function pararDeteccaoFacial() {
 // Verifica continuamente se há um rosto visível no vídeo da câmera
 function iniciarDeteccaoFacial(camera, versao) {
     pararDeteccaoFacial();
+    estado.cameraPronta = false;
+    atualizarBotoes();
 
-    // Usa a API nativa FaceDetector (suportada no Chrome/Edge/Android)
-    const temDetectorNativo = "FaceDetector" in window;
-    const detector = temDetectorNativo ? new window.FaceDetector({ fastMode: true, maxDetectedFaces: 2 }) : null;
+    // Inicializa o modelo de IA do Google MediaPipe
+    const faceDetection = new window.FaceDetection({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+    });
 
-    intervaloDeteccao = setInterval(async () => {
+    faceDetection.setOptions({
+        model: "short",
+        minDetectionConfidence: 0.70 // Exige 70% de certeza de que é um rosto real
+    });
+
+    // O que acontece cada vez que a IA analisa um quadro da câmera:
+    faceDetection.onResults((resultados) => {
         if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao || !estado.stream) {
-            pararDeteccaoFacial();
             return;
         }
 
-        if (camera.readyState < 2) return;
+        const qtdRostos = resultados.detections ? resultados.detections.length : 0;
 
-        if (detector) {
-            try {
-                const rostos = await detector.detect(camera);
-                if (rostos.length === 1) {
-                    estado.cameraPronta = true;
-                    mensagem("mensagem-facial", "Rosto detectado! Clique em Confirmar.", "sucesso");
-                } else if (rostos.length > 1) {
-                    estado.cameraPronta = false;
-                    mensagem("mensagem-facial", "Mais de um rosto detectado. Deixe apenas você na câmera.", "erro");
-                } else {
-                    estado.cameraPronta = false;
-                    mensagem("mensagem-facial", "Nenhum rosto detectado. Posicione seu rosto na câmera.", "info");
-                }
-            } catch {
-                estado.cameraPronta = false;
-            }
+        if (qtdRostos === 1) {
+            estado.cameraPronta = true;
+            mensagem("mensagem-facial", "Rosto identificado! Clique em Confirmar.", "sucesso");
+        } else if (qtdRostos > 1) {
+            estado.cameraPronta = false;
+            mensagem("mensagem-facial", "Mais de um rosto na câmera! Deixe apenas você.", "erro");
         } else {
-            // Fallback para navegadores sem FaceDetector (ex: Firefox/Safari):
-            // exige que o vídeo esteja ativo e com imagem válida
-            const foto = capturarFoto();
-            estado.cameraPronta = Boolean(foto && foto.length > 1500);
-            if (estado.cameraPronta) {
-                mensagem("mensagem-facial", "Câmera ativa. Posicione seu rosto e confirme.", "sucesso");
-            }
+            estado.cameraPronta = false;
+            mensagem("mensagem-facial", "Nenhum rosto detectado. Posicione seu rosto na câmera.", "erro");
         }
 
         atualizarBotoes();
-    }, 500);
+    });
+
+    // Loop que envia a imagem da câmera para a IA a cada 400ms
+    intervaloDeteccao = setInterval(async () => {
+        if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao || !estado.stream) {
+            pararDeteccaoFacial();
+            faceDetection.close();
+            return;
+        }
+
+        if (camera.readyState >= 2 && camera.videoWidth > 0) {
+            try {
+                await faceDetection.send({ image: camera });
+            } catch {
+                estado.cameraPronta = false;
+                atualizarBotoes();
+            }
+        }
+    }, 400);
 }
 
 // Desliga a câmara e limpa a memória dela
@@ -293,10 +332,13 @@ function registrosHoje() {
 // Libera ou bloqueia os botões dependendo do que o aluno está a fazer
 function atualizarBotoes() {
     const bloqueado = estado.ocupado;
+    
+    // Configurações básicas de outros botões
     ["btn-login", "btn-cadastrar"].forEach((id) => {
         const el = porId(id);
         if (el) el.disabled = bloqueado || !estado.sessaoConhecida;
     });
+    
     ["btn-primeiro-acesso", "btn-voltar-login", "btn-esqueceu-senha",
         "btn-voltar-login-recuperar", "btn-enviar-recuperacao", "btn-atualizar-login",
         "btn-sair", "btn-cancelar-facial", "btn-reabrir-camera",
@@ -304,8 +346,17 @@ function atualizarBotoes() {
         const el = porId(id);
         if (el) el.disabled = bloqueado;
     });
+
+    // 🔒 TRAVA OBRIGATÓRIA DA CÂMERA E DO ROSTO:
+    // O botão de confirmar facial SÓ É HABILITADO se a tela atual for a facial,
+    // a câmera estiver ativa E a variável 'cameraPronta' for estritamente verdadeira.
     const btnFacial = porId("btn-cadastrar-facial");
-    if (btnFacial) btnFacial.disabled = bloqueado || !estado.cameraPronta || !estado.stream;
+    if (btnFacial) {
+        const naTelaFacial = (estado.tela === "tela-facial");
+        const rostoConfirmado = Boolean(estado.cameraPronta && estado.stream);
+        
+        btnFacial.disabled = bloqueado || !naTelaFacial || !rostoConfirmado;
+    }
     
     const registros = registrosHoje();
     const entrada = registros.some((registro) => registro.tipo === "entrada");
@@ -657,7 +708,14 @@ const btnCadastrar = porId("btn-cadastrar");
 if (btnCadastrar) {
     btnCadastrar.addEventListener("click", () => {
         void executar("mensagem-cadastro", async () => {
-            limparErrosCadastro(); // Limpa marcações vermelhas anteriores
+            // Limpa apenas as bordas vermelhas sem desmarcar o checkbox dos termos
+            [
+                "cadastro-nome", "cadastro-email", "cadastro-ra", "cadastro-senha",
+                "responsavel-nome", "responsavel-telefone", "responsavel-email"
+            ].forEach(id => {
+                const campo = porId(id);
+                if (campo) campo.style.borderColor = "";
+            });
 
             // Pega os valores preenchidos nos inputs
             const nome = porId("cadastro-nome") ? porId("cadastro-nome").value.trim() : "";
@@ -667,6 +725,7 @@ if (btnCadastrar) {
             const nomeResp = porId("responsavel-nome") ? porId("responsavel-nome").value.trim() : "";
             const telResp = porId("responsavel-telefone") ? porId("responsavel-telefone").value.replace(/\D/g, "") : "";
             const emailResp = porId("responsavel-email") ? porId("responsavel-email").value.trim() : "";
+            const aceiteTermos = porId("aceite-termos");
 
             // Validações que destacam o campo exato em vermelho se falhar
             // Nome completo obrigatório: pelo menos nome + sobrenome (2 palavras com 2+ letras)
@@ -702,9 +761,21 @@ if (btnCadastrar) {
                 destacarErro("cadastro-senha");
                 throw new Error("A senha precisa ter entre 8 e 128 caracteres.");
             }
+            if (aceiteTermos && !aceiteTermos.checked) {
+                throw new Error("Você precisa ler e aceitar os Termos de Segurança e Uso de Dados Biométricos.");
+            }
 
             // Se tudo estiver certo, envia os dados
-            const dados = { nome, email, RA: normalizarRA(raInput), senha, nome_responsavel: nomeResp, telefone_responsavel: telResp, email_responsavel: emailResp };
+            const dados = {
+                nome,
+                email,
+                RA: normalizarRA(raInput),
+                senha,
+                nome_responsavel: nomeResp,
+                telefone_responsavel: telResp,
+                email_responsavel: emailResp,
+                termos_aceitos: true
+            };
             const retorno = await api("/alunos", dados);
             
             if (!retorno.aluno) throw new Error("Não foi possível concluir o cadastro.");
@@ -906,6 +977,42 @@ if (btnAtalhoTeste) {
 }
 
 
+/* =================================================================
+   7. EVENTOS DE COOKIES E TERMOS DE SEGURANÇA
+   ================================================================= */
+
+const btnAceitarCookies = porId("btn-aceitar-cookies");
+if (btnAceitarCookies) {
+    btnAceitarCookies.addEventListener("click", () => {
+        definirCookie("controle_escolar_cookies", "aceito", 180);
+        const banner = porId("banner-cookies");
+        if (banner) banner.classList.add("escondida");
+    });
+}
+
+["link-abrir-termos", "link-cookies-termos"].forEach((id) => {
+    const link = porId(id);
+    if (link) {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            alternarModalTermos(true);
+        });
+    }
+});
+
+const btnFecharTermos = porId("btn-fechar-termos");
+if (btnFecharTermos) {
+    btnFecharTermos.addEventListener("click", () => {
+        alternarModalTermos(false);
+    });
+}
+
+const modalTermos = porId("modal-termos");
+if (modalTermos) {
+    modalTermos.addEventListener("click", (e) => {
+        if (e.target === modalTermos) alternarModalTermos(false);
+    });
+}
 
 
 /* =================================================================
@@ -914,6 +1021,7 @@ if (btnAtalhoTeste) {
 
 // Executado automaticamente assim que a página abre para preparar tudo
 void executar("mensagem-login", async () => {
+    verificarConsentimentoCookies();
     estado.sessaoConhecida = true;
     estado.historicoCarregado = true;
     atualizarBotoes();

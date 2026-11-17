@@ -20,110 +20,62 @@
 
         <section id="tela-login" class="tela">
 
-            <div class="topbar">
-                <span class="marca">Controle Escolar</span>
-            </div>
+    <div class="topbar">
+        <span class="marca">Controle Escolar</span>
+    </div>
 
+    <div class="conteudo">
 
-            <div class="conteudo">
+        <h1>Bem-vindo!</h1>
 
-                <h1>Bem-vindo!</h1>
+        <p class="subtitulo">
+            Entre para registrar sua entrada e saída da escola.
+        </p>
 
-                <p class="subtitulo">
-                    Entre para registrar sua entrada e saída da escola.
-                </p>
+        <div class="campo">
+            <label for="login-ra">RA + dígito</label>
+            <input type="text" id="login-ra" placeholder="000000000000-0" maxlength="14" autocomplete="username" autocapitalize="characters">
+        </div>
+     
+        <div class="campo">
+            <label for="login-senha">Senha</label>
+            <input type="password" id="login-senha" placeholder="Digite sua senha" maxlength="128" autocomplete="current-password">
+        </div>
 
-                <div class="campo">
+        <button id="btn-login" class="botao-principal">
+            Entrar
+        </button>
 
-                    <label for="login-ra">
-                        RA + dígito
-                    </label>
+        <!-- 👇 COLOQUE O CHECKBOX DOS TERMOS AQUI DENTRO, LOGO ABAIXO DO ENTRAR 👇 -->
+        <div class="campo" style="margin-top: 15px;">
+            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                <input type="checkbox" id="aceite-termos-login" style="width: auto; margin-top: 3px;">
+                <span>
+                    Li e concordo com os 
+                    <a href="#" id="link-abrir-termos" style="text-decoration: underline;">
+                        Termos de Segurança e Uso de Dados Biométricos (LGPD)
+                    </a>.
+                </span>
+            </label>
+        </div>
+        <!-- 👆 FIM DO BLOCO 👆 -->
 
-                    <input
-                        type="text"
-                        id="login-ra"
-                        placeholder="000000000000-0"
-                        maxlength="14"
-                        autocomplete="username"
-                        autocapitalize="characters"
-                                         >
-             
-                <div class="campo">
+        <p id="mensagem-login" class="mensagem" role="status" aria-live="polite"></p>
 
+        <div class="opcoes">
+            <button id="btn-primeiro-acesso" class="botao-secundario">
+                Primeiro acesso: criar conta
+            </button>
+            <button id="btn-esqueceu-senha" class="botao-texto" type="button">
+                Esqueceu sua senha?
+            </button>
+            <button id="btn-atalho-teste" class="botao-secundario botao-teste">
+                botao do DEV
+            </button>
+        </div>
 
-
-
-                    <label for="login-senha">
-                        Senha
-                    </label>
-
-                    <input
-                        type="password"
-                        id="login-senha"
-                        placeholder="Digite sua senha"
-                        maxlength="128"
-                        autocomplete="current-password"
-                    >
-
-                </div>
-
-
-                <button
-                    id="btn-login"
-                    class="botao-principal"
-                >
-                    Entrar
-                </button>
-
-
-                <p
-                    id="mensagem-login"
-                    class="mensagem"
-                    role="status"
-                    aria-live="polite"
-                ></p>
-
-
-                <div class="opcoes">
-
-                    <!-- Primeiro acesso cria uma conta pela API, sem acesso de teste. -->
-
-                    <button
-                        id="btn-primeiro-acesso"
-                        class="botao-secundario"
-                    >
-                        Primeiro acesso: criar conta
-                    </button>
-
-
-
-                    <!-- botao de esqueceu sua senha -->
-                    <button
-                        id="btn-esqueceu-senha"
-                        class="botao-texto"
-                        type="button"
-                    >
-                        Esqueceu sua senha?
-                    </button>
-
-
-
-
-                    <!-- Botão de Pular Tela (Modo Teste) -->
-                    <button
-                        id="btn-atalho-teste"
-                        class="botao-secundario botao-teste"
-                    >
-                        botao do DEV
-                    </button>
-
-                    
-
-                </div>
-
-            </div>
-
-        </section>
+    </div>
+</section>
 
 
 
@@ -184,7 +136,7 @@
                     type="text"
                     id="cadastro-email"
                     placeholder="abcd@gmail.com"
-                    maxlength="14"
+                    maxlength="99"
                     autocomplete="username"
                     inputmode="text"
                     autocapitalize="characters"
@@ -635,6 +587,44 @@
 
     </main>
 
+        <!-- ========================================== -->
+        <!-- MODAL DE TERMOS DE SEGURANÇA E PRIVACIDADE -->
+        <!-- ========================================== -->
+        <div id="modal-termos" class="escondida" style="
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px; z-index: 9999;
+        ">
+            <div style="
+                background: #ffffff; color: #1e293b; max-width: 550px; width: 100%;
+                max-height: 80vh; border-radius: 12px; padding: 24px;
+                display: flex; flex-direction: column; gap: 16px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            ">
+                <h2 style="margin: 0; font-size: 1.25rem;">Termos de Segurança e Privacidade (LGPD)</h2>
+                
+                <div style="overflow-y: auto; font-size: 0.9rem; line-height: 1.5; padding-right: 6px;">
+                    <p><strong>1. Finalidade do Sistema:</strong> O sistema <em>Controle Escolar</em> coleta dados cadastrais e biométricos exclusivamente para controle de frequência, segurança escolar e notificação aos responsáveis legais.</p>
+                    <p><strong>2. Dados Coletados:</strong> Nome completo, RA, e-mail, dados de contato do responsável, registros de data/hora de entrada e saída, além da captura facial.</p>
+                    <p><strong>3. Uso da Biometria Facial (Dado Sensível - LGPD):</strong> A imagem facial é utilizada unicamente para validar a identidade no momento do registro de entrada/saída. As imagens são protegidas e não são compartilhadas com terceiros.</p>
+                    <p><strong>4. Política de Cookies e Sessão:</strong> Utilizamos cookies técnicos e armazenamento local estritamente necessários para autenticação, proteção contra ataques (CSRF) e memorização do aceite desta política.</p>
+                    <p><strong>5. Segurança da Conta:</strong> O aluno é responsável pelo sigilo de sua senha e RA. Em caso de suspeita de acesso indevido, utilize a opção <em>"Esqueceu sua senha?"</em> ou comunique a secretaria da escola.</p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="btn-fechar-termos" class="botao-principal" style="width: auto; padding: 10px 20px; margin: 0;">
+                        Entendi e Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Biblioteca de Inteligência Artificial para Detecção Real de Rosto -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+    <script src="front-end/script.js"></script>
+    
+    </body>
 
     <script src="front-end/script.js"></script>
 

@@ -25,6 +25,7 @@ const estado = {
 
 let consultaHistorico = null;
 let intervaloDeteccao = null;
+let modoDesenvolvimento = false;
 
 
 /* =================================================================
@@ -329,7 +330,20 @@ function registrosHoje() {
     return estado.historico.filter((registro) => registro.data === estado.hoje);
 }
 
+
+// Verifica se ainda está dentro do horário permitido para entrada
+function horarioEntradaPermitido() {
+    if (modoDesenvolvimento) return true;
+    const agora = new Date();
+    const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+
+    // Permite registrar até 07h30, inclusive
+    return minutosAtuais <= (7 * 60 + 30);
+}
+
+
 // Libera ou bloqueia os botões dependendo do que o aluno está a fazer
+
 function atualizarBotoes() {
     const bloqueado = estado.ocupado;
     
@@ -365,8 +379,25 @@ function atualizarBotoes() {
     
     const btnEntrada = porId("btn-entrada");
     const btnSaida = porId("btn-saida");
-    if (btnEntrada) btnEntrada.disabled = indisponivel || entrada;
-    if (btnSaida) btnSaida.disabled = indisponivel || !entrada || saida;
+
+const horarioPermitido = horarioEntradaPermitido();
+
+if (btnEntrada) {
+    btnEntrada.disabled = indisponivel || entrada || !horarioPermitido;
+}
+
+if (btnSaida) {
+    btnSaida.disabled = indisponivel || !entrada || saida;
+}
+
+if (!horarioPermitido && !entrada && estado.aluno) {
+    mensagem(
+        "mensagem-principal",
+        "Horário encerrado! O registro de entrada só é permitido até 07h30.",
+        "erro"
+    );
+}
+
 }
 
 // Executa uma ação na tela mostrando um aviso de "carregando" se precisar
@@ -560,10 +591,42 @@ function capturarFoto() {
     return canvas.toDataURL("image/jpeg", 0.85);
 }
 
-// Pega a localização do GPS (simulada para testes)
+
+// Obtém a localização real do aluno pelo navegador
 async function localizar() {
-    return { latitude: 0, longitude: 0, precisao: 1 };
+    if (!navigator.geolocation) {
+        throw new Error("Seu navegador não suporta localização.");
+    }
+
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            (posicao) => {
+                resolve({
+                    latitude: posicao.coords.latitude,
+                    longitude: posicao.coords.longitude,
+                    precisao: posicao.coords.accuracy
+                });
+            },
+            (erro) => {
+                if (erro.code === erro.PERMISSION_DENIED) {
+                    reject(new Error("Você precisa permitir o acesso à localização."));
+                } else if (erro.code === erro.POSITION_UNAVAILABLE) {
+                    reject(new Error("Não foi possível identificar sua localização."));
+                } else if (erro.code === erro.TIMEOUT) {
+                    reject(new Error("O tempo para obter a localização terminou. Tente novamente."));
+                } else {
+                    reject(new Error("Erro ao obter sua localização."));
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    });
 }
+
 
 // Sai da conta do aluno
 async function sair() {
@@ -794,8 +857,22 @@ const btnEntrada = porId("btn-entrada");
 if (btnEntrada) {
     btnEntrada.addEventListener("click", () => {
         void executar("mensagem-principal", async () => {
-            await carregarHistorico();
-            await prepararFacial("entrada");
+            
+if (!horarioEntradaPermitido()) {
+    throw new Error(
+        "Horário encerrado! Não é mais possível registrar entrada após 07h30."
+    );
+}
+
+await carregarHistorico();
+
+if (!horarioEntradaPermitido()) {
+    throw new Error(
+        "O horário de registro terminou. O limite é 07h30."
+    );
+}
+
+await prepararFacial("entrada");
         });
     });
 }
@@ -844,6 +921,17 @@ if (btnCadastrarFacial) {
             if (!foto) {
                 throw new Error("Não foi possível capturar a imagem do seu rosto.");
             }
+
+            
+if (
+    estado.acaoFacial?.tipo === "entrada" &&
+    !horarioEntradaPermitido()
+) {
+    throw new Error(
+        "Horário encerrado! A entrada deveria ter sido registrada até 07h30."
+    );
+}
+
 
             const acao = estado.acaoFacial || { tipo: "entrada" };
             const rota = acao.tipo === "cadastro" ? "/rosto" : "/presenca";
@@ -969,6 +1057,8 @@ const btnAtalhoTeste = porId("btn-atalho-teste");
 if (btnAtalhoTeste) {
     btnAtalhoTeste.addEventListener("click", () => {
         void executar("mensagem-login", async () => {
+            modoDesenvolvimento = true;
+
             // Define um aluno de teste fictício para liberar a interface
             estado.aluno = { id: 999, nome: "Aluno Teste (Atalho)", rosto_cadastrado: true };
             await irParaConta();

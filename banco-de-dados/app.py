@@ -1,4 +1,5 @@
 import hmac
+import hashlib
 import math
 import os
 import re
@@ -15,7 +16,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from banco import transacao
-from emails import enfileirar
+from emails import enfileirar, enviar_recuperacao
 from facial import MODELO, ErroFacial, conferir, extrair, guardar
 
 # Define a pasta do site e cria a aplicação Flask que recebe as requisições.
@@ -327,6 +328,146 @@ def login():
     token = iniciar_sessao(linha["id"])
     return jsonify(mensagem="Login realizado.", aluno=aluno, csrf_token=token)
 
+@app.post("/recuperar-senha")
+def solicitar_recuperacao_senha():
+    dados = corpo_json()
+    ra = ra_normalizado(dados)
+    email = email_validado(dados, "email")
+    envio = None
+
+    with transacao() as (_, cursor):
+        cursor.execute(
+            "SELECT id, nome, email FROM aluno WHERE RA=%s AND email=%s",
+            (ra, email),
+        )
+        aluno = cursor.fetchone()
+
+        if aluno:
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+            # Um pedido novo invalida os links antigos ainda não usados.
+            cursor.execute(
+                """UPDATE recuperacao_senha
+                   SET invalidado_em=UTC_TIMESTAMP()
+                   WHERE aluno_id=%s
+                     AND usado_em IS NULL
+                     AND invalidado_em IS NULL""",
+                (aluno["id"],),
+            )
+
+            cursor.execute(
+                """INSERT INTO recuperacao_senha
+                   (aluno_id, token_hash, expira_em, criado_em)
+                   VALUES (
+                       %s, %s,
+                       DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 MINUTE),
+                       UTC_TIMESTAMP()
+                   )""",
+                (aluno["id"], token_hash),
+            )
+            token_id = cursor.lastrowid
+
+            # Usa a URL pública configurada para que o e-mail sempre aponte
+            # para o mesmo endereço do túnel aberto no celular.
+            origem = os.getenv("APP_PUBLIC_URL", "").strip().rstrip("/")
+            if not origem:
+                origem = request.headers.get("Origin") or request.host_url
+            link = f"{origem.rstrip('/')}/#redefinir={token}"
+
+            envio = (aluno["email"], aluno["nome"], link, token_id)
+
+    # Envia depois de concluir a transação do banco.
+    if envio:
+        try:
+            enviar_recuperacao(envio[0], envio[1], envio[2])
+        except Exception as erro:
+            # Se o e-mail falhar, invalida o token e não registra o token
+            # nem o endereço da pessoa no log.
+            try:
+                with transacao() as (_, cursor):
+                    cursor.execute(
+                        """UPDATE recuperacao_senha
+                           SET invalidado_em=UTC_TIMESTAMP()
+                           WHERE id=%s AND usado_em IS NULL""",
+                        (envio[3],),
+                    )
+            except Exception as erro_banco:
+                app.logger.error(
+                    "Falha ao invalidar token de recuperação: %s",
+                    type(erro_banco).__name__,
+                )
+
+            app.logger.error(
+                "Falha ao enviar e-mail de recuperação: %s",
+                type(erro).__name__,
+            )
+
+    # A mesma resposta é devolvida mesmo se RA/e-mail não corresponderem.
+    return jsonify(
+        mensagem=(
+            "Se os dados estiverem corretos, enviamos um link "
+            "de redefinição para o seu e-mail."
+        )
+    )
+
+@app.post("/redefinir-senha")
+def redefinir_senha():
+    dados = corpo_json()
+    token = texto(dados, "token", 200)
+    senha = texto(dados, "senha", 128, 8, aparar=False)
+
+    if len(senha.strip()) < 8:
+        raise ErroAPI("A nova senha precisa ter pelo menos 8 caracteres.")
+
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    senha_hash = generate_password_hash(senha)
+
+    with transacao() as (_, cursor):
+        cursor.execute(
+            """SELECT id, aluno_id
+               FROM recuperacao_senha
+               WHERE token_hash=%s
+                 AND expira_em > UTC_TIMESTAMP()
+                 AND usado_em IS NULL
+                 AND invalidado_em IS NULL
+               FOR UPDATE""",
+            (token_hash,),
+        )
+        recuperacao = cursor.fetchone()
+
+        if not recuperacao:
+            raise ErroAPI(
+                "Esse link é inválido ou expirou. Peça outro link de recuperação.",
+                400,
+            )
+
+        cursor.execute(
+            "UPDATE aluno SET senha=%s WHERE id=%s",
+            (senha_hash, recuperacao["aluno_id"]),
+        )
+
+        cursor.execute(
+            """UPDATE recuperacao_senha
+               SET usado_em=UTC_TIMESTAMP()
+               WHERE id=%s""",
+            (recuperacao["id"],),
+        )
+
+        # Um link novo não deve continuar valendo depois da troca da senha.
+        cursor.execute(
+            """UPDATE recuperacao_senha
+               SET invalidado_em=UTC_TIMESTAMP()
+               WHERE aluno_id=%s
+                 AND id<>%s
+                 AND usado_em IS NULL
+                 AND invalidado_em IS NULL""",
+            (recuperacao["aluno_id"], recuperacao["id"]),
+        )
+
+    return jsonify(
+        mensagem="Senha redefinida. Agora entre com a senha nova."
+    )
 
 # Encerra a sessão do aluno e cria um token CSRF para a próxima ação.
 @app.post("/logout")

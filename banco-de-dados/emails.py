@@ -117,6 +117,55 @@ def enviar(aviso):
             raise RuntimeError("O servidor recusou o destinatário.")
 
 
+def enviar_recuperacao(destinatario, nome, link):
+    validar_configuracao()
+
+    host = os.getenv("SMTP_HOST")
+    remetente = os.getenv("SMTP_FROM")
+    modo = os.getenv("SMTP_SECURITY", "starttls").lower()
+    porta = int(os.getenv("SMTP_PORT", "465" if modo == "ssl" else "587"))
+
+    mensagem = EmailMessage()
+    mensagem["From"] = remetente
+    mensagem["To"] = destinatario
+    mensagem["Subject"] = "FaceClass: redefinição de senha"
+
+    dominio = remetente.rsplit("@", 1)[-1]
+    mensagem["Message-ID"] = (
+        f"<faceclass-recuperacao-{uuid.uuid4().hex}@{dominio}>"
+    )
+    mensagem.set_content(
+        f"Olá, {nome}!\n\n"
+        "Recebemos um pedido para redefinir sua senha do FaceClass.\n"
+        "Acesse o link abaixo para criar uma senha nova:\n\n"
+        f"{link}\n\n"
+        "O link vale por 30 minutos e só pode ser usado uma vez.\n"
+        "Se você não pediu a redefinição, ignore este e-mail."
+    )
+
+    contexto = ssl.create_default_context()
+
+    if modo == "ssl":
+        smtp = smtplib.SMTP_SSL(
+            host, porta, timeout=20, context=contexto
+        )
+    else:
+        smtp = smtplib.SMTP(host, porta, timeout=20)
+
+    with smtp:
+        if modo == "starttls":
+            smtp.ehlo()
+            smtp.starttls(context=contexto)
+            smtp.ehlo()
+
+        usuario = os.getenv("SMTP_USER")
+        if usuario:
+            smtp.login(usuario, os.environ["SMTP_PASSWORD"])
+
+        recusados = smtp.send_message(mensagem)
+        if recusados:
+            raise RuntimeError("O servidor recusou o destinatário.")
+
 # Marca o aviso como enviado ou agenda uma nova tentativa após falha.
 def concluir(aviso, erro=None):
     with transacao() as (_, cursor):

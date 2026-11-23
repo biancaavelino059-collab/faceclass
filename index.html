@@ -340,7 +340,52 @@
 
         </section>
 
+<section id="tela-redefinir-senha" class="tela escondida">
+    <div class="topbar">
+        <span class="marca">Controle Escolar</span>
+    </div>
 
+    <div class="conteudo">
+        <h1>Crie uma senha nova</h1>
+        <p class="subtitulo">Escolha uma senha com pelo menos 8 caracteres.</p>
+
+        <div class="campo">
+            <label for="nova-senha">Nova senha</label>
+            <input
+                type="password"
+                id="nova-senha"
+                minlength="8"
+                maxlength="128"
+                autocomplete="new-password"
+                required
+            >
+        </div>
+
+        <div class="campo">
+            <label for="confirmar-nova-senha">Confirme a nova senha</label>
+            <input
+                type="password"
+                id="confirmar-nova-senha"
+                minlength="8"
+                maxlength="128"
+                autocomplete="new-password"
+                required
+            >
+        </div>
+
+        <button id="btn-enviar-nova-senha" class="botao-principal" type="button">
+            Salvar nova senha
+        </button>
+
+        <p id="mensagem-redefinir-senha" class="mensagem" role="status" aria-live="polite"></p>
+
+        <div class="opcoes">
+            <button id="btn-voltar-login-redefinir" class="botao-secundario" type="button">
+                Voltar para o login
+            </button>
+        </div>
+    </div>
+</section>
         <!-- ========================================== -->
         <!-- TELA DE CADASTRO FACIAL -->
         <!-- ========================================== -->
@@ -620,14 +665,6 @@
         </div>
 
 
-        <!-- Biblioteca de Inteligência Artificial para Detecção Real de Rosto -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
-    <script src="front-end/script.js"></script>
-
-    </body>
-
-    <script src="front-end/script.js"></script>
-
+<script src="front-end/script.js"></script>
 </body>
-
 </html>

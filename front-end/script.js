@@ -24,8 +24,10 @@ const estado = {
 };
 
 let consultaHistorico = null;
-let intervaloDeteccao = null;
 let modoDesenvolvimento = false;
+let tokenRecuperacao = new URLSearchParams(
+    window.location.hash.slice(1)
+).get("redefinir");
 
 
 /* =================================================================
@@ -176,38 +178,51 @@ function destacarErro(id) {
    ================================================================= */
 
 // Simula respostas falsas do servidor para o site funcionar sem precisar ligar o Python
-async function api(caminho, dados) {
-    await new Promise(resolve => setTimeout(resolve, 200)); // Simula um tempinho de espera
-    
+// Envia uma requisição real ao backend Flask.
+async function apiDesenvolvimento(caminho, dados) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+
     if (caminho === "/sessao") {
         return { csrf_token: "token-teste", aluno: estado.aluno };
     }
+
     if (caminho === "/login") {
-        return { 
-            csrf_token: "token-teste", 
-            aluno: estado.aluno || { id: 999, nome: "Aluno Teste", rosto_cadastrado: true } 
+        return {
+            csrf_token: "token-teste",
+            aluno: estado.aluno || {
+                id: 999,
+                nome: "Aluno Teste",
+                rosto_cadastrado: true
+            }
         };
     }
+
     if (caminho === "/alunos") {
-        return { 
-            csrf_token: "token-teste", 
-            aluno: dados 
-        };
+        return { csrf_token: "token-teste", aluno: dados };
     }
+
     if (caminho === "/recuperar-senha") {
         return {
             csrf_token: "token-teste",
             mensagem: "Link de recuperação enviado."
         };
     }
+
     if (caminho === "/presencas") {
-        const dataHoje = new Date().toISOString().split('T')[0];
-        return { hoje: estado.hoje || dataHoje, presencas: estado.historico };
+        const dataHoje = new Date().toISOString().split("T")[0];
+        return {
+            hoje: estado.hoje || dataHoje,
+            presencas: estado.historico
+        };
     }
+
     if (caminho === "/presenca" || caminho === "/rosto") {
-        const dataHoje = new Date().toISOString().split('T')[0];
-        const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
+        const dataHoje = new Date().toISOString().split("T")[0];
+        const horaAtual = new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
         if (dados && dados.tipo) {
             estado.historico.push({
                 tipo: dados.tipo,
@@ -217,87 +232,72 @@ async function api(caminho, dados) {
                 notificacao: "enviado"
             });
         }
-        return { mensagem: "Operação realizada com sucesso!", notificacao: "enviado" };
+
+        return {
+            mensagem: "Operação realizada com sucesso!",
+            notificacao: "enviado"
+        };
     }
+
     if (caminho === "/logout") {
         return { csrf_token: "token-teste" };
     }
+
     return { csrf_token: "token-teste" };
 }
 
+// Envia as chamadas reais para o Flask ou usa a simulação quando o botão Dev estiver ativo.
+async function api(caminho, dados) {
+    if (modoDesenvolvimento) {
+        return apiDesenvolvimento(caminho, dados);
+    }
+
+    const metodo = dados === undefined ? "GET" : "POST";
+    const cabecalhos = { Accept: "application/json" };
+    const opcoes = {
+        method: metodo,
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: cabecalhos,
+    };
+
+    if (metodo !== "GET") {
+        cabecalhos["Content-Type"] = "application/json";
+        if (estado.csrf) cabecalhos["X-CSRF-Token"] = estado.csrf;
+        opcoes.body = JSON.stringify(dados);
+    }
+
+    let resposta;
+    try {
+        resposta = await fetch(caminho, opcoes);
+    } catch {
+        throw new ErroRequisicao("Não foi possível conectar ao servidor. Confira se o iniciar-site está aberto.");
+    }
+
+    let retorno;
+    try {
+        retorno = await resposta.json();
+    } catch {
+        throw new ErroRequisicao("O servidor retornou uma resposta inválida.", resposta.status);
+    }
+
+    if (retorno.csrf_token) estado.csrf = retorno.csrf_token;
+    if (!resposta.ok) {
+        throw new ErroRequisicao(
+            retorno.erro || retorno.mensagem || "Não foi possível concluir a operação.",
+            resposta.status
+        );
+    }
+
+    return retorno;
+}
 
 /* =================================================================
    5. CONTROLO DA CÂMARA E DAS TELAS
    ================================================================= */
 
-// Para o loop de verificação facial quando a câmera fecha
-function pararDeteccaoFacial() {
-    if (intervaloDeteccao) {
-        clearInterval(intervaloDeteccao);
-        intervaloDeteccao = null;
-    }
-}
-
-// Verifica continuamente se há um rosto visível no vídeo da câmera
-function iniciarDeteccaoFacial(camera, versao) {
-    pararDeteccaoFacial();
-    estado.cameraPronta = false;
-    atualizarBotoes();
-
-    // Inicializa o modelo de IA do Google MediaPipe
-    const faceDetection = new window.FaceDetection({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
-    });
-
-    faceDetection.setOptions({
-        model: "short",
-        minDetectionConfidence: 0.70 // Exige 70% de certeza de que é um rosto real
-    });
-
-    // O que acontece cada vez que a IA analisa um quadro da câmera:
-    faceDetection.onResults((resultados) => {
-        if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao || !estado.stream) {
-            return;
-        }
-
-        const qtdRostos = resultados.detections ? resultados.detections.length : 0;
-
-        if (qtdRostos === 1) {
-            estado.cameraPronta = true;
-            mensagem("mensagem-facial", "Rosto identificado! Clique em Confirmar.", "sucesso");
-        } else if (qtdRostos > 1) {
-            estado.cameraPronta = false;
-            mensagem("mensagem-facial", "Mais de um rosto na câmera! Deixe apenas você.", "erro");
-        } else {
-            estado.cameraPronta = false;
-            mensagem("mensagem-facial", "Nenhum rosto detectado. Posicione seu rosto na câmera.", "erro");
-        }
-
-        atualizarBotoes();
-    });
-
-    // Loop que envia a imagem da câmera para a IA a cada 400ms
-    intervaloDeteccao = setInterval(async () => {
-        if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao || !estado.stream) {
-            pararDeteccaoFacial();
-            faceDetection.close();
-            return;
-        }
-
-        if (camera.readyState >= 2 && camera.videoWidth > 0) {
-            try {
-                await faceDetection.send({ image: camera });
-            } catch {
-                estado.cameraPronta = false;
-                atualizarBotoes();
-            }
-        }
-    }, 400);
-}
-
 // Desliga a câmara e limpa a memória dela
 function pararCamera() {
-    pararDeteccaoFacial();
     estado.cameraVersao += 1;
     estado.cameraPronta = false;
     if (estado.stream) estado.stream.getTracks().forEach((track) => track.stop());
@@ -317,7 +317,7 @@ function pararCamera() {
 // Mostra apenas a tela que a gente quer e esconde as outras
 function mostrarTela(id) {
     if (id !== "tela-facial") pararCamera();
-    ["tela-login", "tela-cadastro", "tela-recuperar", "tela-facial", "tela-principal"].forEach((tela) => {
+    ["tela-login", "tela-cadastro", "tela-recuperar", "tela-redefinir-senha", "tela-facial", "tela-principal"].forEach((tela) => {
         const el = porId(tela);
         if (el) el.classList.toggle("escondida", tela !== id);
     });
@@ -364,22 +364,26 @@ function atualizarBotoes() {
     }
     
     ["btn-primeiro-acesso", "btn-voltar-login", "btn-esqueceu-senha",
-        "btn-voltar-login-recuperar", "btn-enviar-recuperacao", "btn-atualizar-login",
+        "btn-voltar-login-recuperar", "btn-enviar-recuperacao", "btn-enviar-nova-senha",
+        "btn-voltar-login-redefinir", "btn-atualizar-login",
         "btn-sair", "btn-cancelar-facial", "btn-reabrir-camera",
         "btn-atualizar", "btn-confirmar-saida"].forEach((id) => {
         const el = porId(id);
         if (el) el.disabled = bloqueado;
     });
 
-    // 🔒 TRAVA OBRIGATÓRIA DA CÂMERA E DO ROSTO:
-    // O botão de confirmar facial SÓ É HABILITADO se a tela atual for a facial,
-    // a câmera estiver ativa E a variável 'cameraPronta' for estritamente verdadeira.
+    // Libera a confirmação quando há um quadro real da câmera.
+    // O backend continua validando que há exatamente um rosto e que ele corresponde ao cadastro.
     const btnFacial = porId("btn-cadastrar-facial");
     if (btnFacial) {
         const naTelaFacial = (estado.tela === "tela-facial");
-        const rostoConfirmado = Boolean(estado.cameraPronta && estado.stream);
+        const camera = porId("camera");
+        const imagemPronta = Boolean(
+            estado.cameraPronta && estado.stream && camera &&
+            camera.readyState >= 2 && camera.videoWidth > 0
+        );
         
-        btnFacial.disabled = bloqueado || !naTelaFacial || !rostoConfirmado;
+        btnFacial.disabled = bloqueado || !naTelaFacial || !imagemPronta;
     }
     
     const registros = registrosHoje();
@@ -423,6 +427,7 @@ async function executar(idMensagem, acao) {
             "tela-login": "mensagem-login",
             "tela-cadastro": "mensagem-cadastro",
             "tela-recuperar": "mensagem-recuperar",
+            "tela-redefinir-senha": "mensagem-redefinir-senha",
             "tela-facial": "mensagem-facial",
             "tela-principal": "mensagem-principal",
         }[estado.tela] || idMensagem;
@@ -534,38 +539,110 @@ async function irParaConta() {
     await carregarHistorico();
 }
 
-// Liga a câmara do telemóvel ou computador (obrigatória para confirmar presença)
+// Aguarda um quadro real da câmera antes de liberar o botão de confirmação.
+function aguardarImagemCamera(camera, limiteMs = 10000) {
+    return new Promise((resolve, reject) => {
+        const imagemPronta = () =>
+            camera.readyState >= 2 && camera.videoWidth > 0 && camera.videoHeight > 0;
+
+        if (imagemPronta()) {
+            resolve();
+            return;
+        }
+
+        let temporizador;
+        const limpar = () => {
+            clearTimeout(temporizador);
+            camera.removeEventListener("loadeddata", verificar);
+            camera.removeEventListener("playing", verificar);
+            camera.removeEventListener("resize", verificar);
+        };
+        const verificar = () => {
+            if (imagemPronta()) {
+                limpar();
+                resolve();
+            }
+        };
+        temporizador = setTimeout(() => {
+            limpar();
+            reject(new Error("A câmera abriu, mas não enviou imagem. Feche outros aplicativos que possam estar usando a câmera e tente novamente."));
+        }, limiteMs);
+
+        camera.addEventListener("loadeddata", verificar);
+        camera.addEventListener("playing", verificar);
+        camera.addEventListener("resize", verificar);
+        verificar();
+    });
+}
+
+function mensagemErroCamera(erro) {
+    if (erro && erro.name === "Error" && erro.message) return erro.message;
+
+    switch (erro?.name) {
+        case "NotAllowedError":
+        case "PermissionDeniedError":
+            return "O acesso à câmera foi bloqueado. Permita a câmera para este site nas configurações do navegador e recarregue a página.";
+        case "NotFoundError":
+        case "DevicesNotFoundError":
+            return "Nenhuma câmera foi encontrada neste aparelho.";
+        case "NotReadableError":
+        case "TrackStartError":
+            return "A câmera está ocupada ou bloqueada por outro aplicativo. Feche os outros aplicativos que a usam e tente novamente.";
+        case "OverconstrainedError":
+            return "Não foi possível iniciar a câmera deste aparelho. Tente novamente ou confira as permissões do navegador.";
+        case "SecurityError":
+            return "O navegador bloqueou a câmera. Abra o site pelo link HTTPS do túnel, não por HTTP.";
+        default:
+            return "Não consegui abrir a câmera" +
+                (erro?.name ? " (" + erro.name + ")" : "") +
+                ". Confira a permissão de câmera do navegador e tente novamente.";
+    }
+}
+
+// Liga a câmera no navegador; a verificação facial definitiva fica no backend.
 async function abrirCamera() {
     pararCamera();
     const versao = estado.cameraVersao;
     mensagem("mensagem-facial", "Abrindo a câmera...", "info");
     atualizarBotoes();
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-            audio: false,
-        });
+        if (!window.isSecureContext && !["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+            throw new Error("Abra o site pelo endereço HTTPS do túnel para permitir o uso da câmera.");
+        }
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error("Este navegador não disponibiliza a câmera. Abra o link no Chrome ou Safari atualizado.");
+        }
+
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: "user" }, width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false,
+            });
+        } catch (erro) {
+            if (erro?.name !== "OverconstrainedError") throw erro;
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+
         if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao) {
             stream.getTracks().forEach((track) => track.stop());
             return;
         }
         estado.stream = stream;
         const camera = porId("camera");
-        if (!camera) return;
+        if (!camera) throw new Error("Não encontrei o vídeo da câmera na tela.");
         camera.srcObject = stream;
         await camera.play();
+        await aguardarImagemCamera(camera);
+        if (estado.tela !== "tela-facial" || versao !== estado.cameraVersao) return;
 
-        mensagem("mensagem-facial", "Procurando rosto na câmera...", "info");
-        iniciarDeteccaoFacial(camera, versao);
-    } catch {
+        estado.cameraPronta = true;
+        mensagem("mensagem-facial", "Câmera pronta. Centralize apenas o seu rosto e toque em Confirmar.", "sucesso");
+    } catch (erro) {
         if (versao !== estado.cameraVersao) return;
         pararCamera();
         estado.cameraPronta = false;
-        mensagem(
-            "mensagem-facial",
-            "Não foi possível acessar a câmera. Permita o uso da câmera para registrar presença.",
-            "erro"
-        );
+        mensagem("mensagem-facial", mensagemErroCamera(erro), "erro");
     } finally {
         atualizarBotoes();
     }
@@ -641,6 +718,7 @@ async function localizar() {
 // Sai da conta do aluno
 async function sair() {
     pararCamera();
+    await api("/logout", {});
     limparSessao();
     mensagem("mensagem-login", "Você saiu da conta.", "info");
 }
@@ -745,6 +823,57 @@ if (btnEnviarRecuperacao) {
     });
 }
 
+// Envia a nova senha junto com o token que veio no link de recuperação.
+const btnEnviarNovaSenha = porId("btn-enviar-nova-senha");
+if (btnEnviarNovaSenha) {
+    btnEnviarNovaSenha.addEventListener("click", () => {
+        void executar("mensagem-redefinir-senha", async () => {
+            const campoSenha = porId("nova-senha");
+            const campoConfirmacao = porId("confirmar-nova-senha");
+            const senha = campoSenha ? campoSenha.value : "";
+            const confirmacao = campoConfirmacao ? campoConfirmacao.value : "";
+
+            if (!tokenRecuperacao) {
+                throw new Error("Link inválido. Peça outro link de recuperação.");
+            }
+            if (senha.length > 128 || senha.trim().length < 8) {
+                throw new Error("A senha precisa ter pelo menos 8 caracteres.");
+            }
+            if (senha !== confirmacao) {
+                throw new Error("As senhas não são iguais.");
+            }
+
+            await api("/redefinir-senha", {
+                token: tokenRecuperacao,
+                senha
+            });
+
+            tokenRecuperacao = null;
+            if (campoSenha) campoSenha.value = "";
+            if (campoConfirmacao) campoConfirmacao.value = "";
+            mensagem(
+                "mensagem-redefinir-senha",
+                "Senha redefinida. Agora volte ao login e entre com a senha nova.",
+                "sucesso"
+            );
+        });
+    });
+}
+
+// Volta ao login sem manter o token ou a senha digitada na página.
+const btnVoltarLoginRedefinir = porId("btn-voltar-login-redefinir");
+if (btnVoltarLoginRedefinir) {
+    btnVoltarLoginRedefinir.addEventListener("click", () => {
+        tokenRecuperacao = null;
+        const campoSenha = porId("nova-senha");
+        const campoConfirmacao = porId("confirmar-nova-senha");
+        if (campoSenha) campoSenha.value = "";
+        if (campoConfirmacao) campoConfirmacao.value = "";
+        mensagem("mensagem-redefinir-senha");
+        mostrarTela("tela-login");
+    });
+}
+
 // Botão de fazer login (exige RA válido e senha preenchida)
 const btnLogin = porId("btn-login");
 if (btnLogin) {
@@ -770,7 +899,19 @@ if (btnLogin) {
                 throw new Error("Digite sua senha.");
             }
 
-            estado.aluno = { id: 999, nome: "Aluno Teste", rosto_cadastrado: true };
+            // O login normal sempre usa a API real, mesmo depois de testar o modo Dev.
+            modoDesenvolvimento = false;
+            const retorno = await api("/login", {
+                RA: normalizarRA(raInput),
+                senha
+            });
+            if (!retorno.aluno) {
+                throw new Error("O servidor não retornou os dados do aluno.");
+            }
+
+            estado.aluno = retorno.aluno;
+            const campoSenha = porId("login-senha");
+            if (campoSenha) campoSenha.value = "";
             await irParaConta();
         });
     });
@@ -849,11 +990,13 @@ if (btnCadastrar) {
                 email_responsavel: emailResp,
                 termos_aceitos: true
             };
+            // O cadastro normal também deve ignorar a simulação do modo Dev.
+            modoDesenvolvimento = false;
             const retorno = await api("/alunos", dados);
             
             if (!retorno.aluno) throw new Error("Não foi possível concluir o cadastro.");
             
-            estado.aluno = { id: 999, nome: dados.nome, rosto_cadastrado: false };
+            estado.aluno = retorno.aluno;
             if (porId("cadastro-senha")) porId("cadastro-senha").value = "";
             limparErrosCadastro();
             
@@ -945,7 +1088,18 @@ if (
 
             const acao = estado.acaoFacial || { tipo: "entrada" };
             const rota = acao.tipo === "cadastro" ? "/rosto" : "/presenca";
-            await api(rota, { tipo: acao.tipo, motivo_saida: acao.motivo || "", foto });
+            const dadosAcao = {
+                tipo: acao.tipo,
+                motivo_saida: acao.motivo || "",
+                imagem: foto
+            };
+
+            // A API exige localização para presença; no modo Dev, a simulação não usa GPS.
+            if (!modoDesenvolvimento && acao.tipo !== "cadastro") {
+                Object.assign(dadosAcao, await localizar());
+            }
+
+            await api(rota, dadosAcao);
 
             if (acao.tipo === "cadastro" && estado.aluno) {
                 estado.aluno.rosto_cadastrado = true;
@@ -1129,9 +1283,33 @@ if (modalTermos) {
    ================================================================= */
 
 // Executado automaticamente assim que a página abre para preparar tudo
+// Ao abrir, busca no servidor se já existe uma sessão real.
 void executar("mensagem-login", async () => {
     verificarConsentimentoCookies();
+
+    // Enquanto o servidor responde, mantém as ações bloqueadas.
+    estado.sessaoConhecida = false;
+    estado.historicoCarregado = false;
+    atualizarBotoes();
+
+    const retorno = await api("/sessao");
+
+    // A função api atualiza o token CSRF com a resposta do servidor.
+    estado.aluno = retorno.aluno || null;
     estado.sessaoConhecida = true;
-    estado.historicoCarregado = true;
+
+    if (tokenRecuperacao) {
+        // Guarda o token na memória e remove-o da barra de endereço.
+        window.history.replaceState({}, document.title, window.location.pathname);
+        mostrarTela("tela-redefinir-senha");
+    } else if (estado.aluno) {
+        await irParaConta();
+    } else {
+        estado.historico = [];
+        estado.hoje = null;
+        estado.historicoCarregado = true;
+        mostrarTela("tela-login");
+    }
+
     atualizarBotoes();
 });

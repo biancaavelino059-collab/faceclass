@@ -1279,6 +1279,42 @@ if (modalTermos) {
 
 
 /* =================================================================
+   6.1 MOSTRAR / OCULTAR SENHA (OLHINHO)
+   ================================================================= */
+
+function resetarVisibilidadeSenhas() {
+    document.querySelectorAll(".btn-toggle-senha").forEach((botao) => {
+        const idCampo = botao.getAttribute("data-alvo");
+        const campo = idCampo ? porId(idCampo) : null;
+        const iconeAberto = botao.querySelector(".icone-olho-aberto");
+        const iconeFechado = botao.querySelector(".icone-olho-fechado");
+
+        if (campo) campo.type = "password";
+        botao.setAttribute("aria-pressed", "false");
+        if (iconeAberto) iconeAberto.style.display = "inline";
+        if (iconeFechado) iconeFechado.style.display = "none";
+    });
+}
+
+document.querySelectorAll(".btn-toggle-senha").forEach((botao) => {
+    botao.addEventListener("click", () => {
+        const idCampo = botao.getAttribute("data-alvo");
+        const campo = idCampo ? porId(idCampo) : null;
+        if (!campo) return;
+
+        const estaVisivel = campo.type === "text";
+        campo.type = estaVisivel ? "password" : "text";
+        botao.setAttribute("aria-pressed", String(!estaVisivel));
+
+        const iconeAberto = botao.querySelector(".icone-olho-aberto");
+        const iconeFechado = botao.querySelector(".icone-olho-fechado");
+        if (iconeAberto) iconeAberto.style.display = estaVisivel ? "inline" : "none";
+        if (iconeFechado) iconeFechado.style.display = estaVisivel ? "none" : "inline";
+    });
+});
+
+
+/* =================================================================
    8. LIGAR O SISTEMA
    ================================================================= */
 

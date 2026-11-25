@@ -38,9 +38,9 @@
         </div>
      
         <div class="campo">
-             <label for="login-senha">Senha</label>
-             <div style="position: relative; display: flex; align-items: center;">
-                 <input
+            <label for="login-senha">Senha</label>
+            <div style="position: relative; display: flex; align-items: center;">
+                <input
                     type="password"
                     id="login-senha"
                     placeholder="Digite sua senha"
@@ -69,6 +69,19 @@
                     </svg>
                 </button>
             </div>
+        </div>
+
+        <!-- 👇 COLOQUE O CHECKBOX DOS TERMOS AQUI DENTRO, LOGO ABAIXO DO ENTRAR 👇 -->
+        <div class="campo" style="margin-top: 15px;">
+            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                <input type="checkbox" id="aceite-termos-login" style="width: auto; margin-top: 3px;">
+                <span>
+                    Li e concordo com os 
+                    <a href="#" id="link-abrir-termos" style="text-decoration: underline;">
+                        Termos de Segurança e Uso de Dados Biométricos (LGPD)
+                    </a>.
+                </span>
+            </label>
         </div>
         <!-- 👆 FIM DO BLOCO 👆 -->
 
@@ -176,41 +189,41 @@
 
 
                     <div class="campo">
-                        <label for="cadastro-senha">
-                            Nova senha
-                        </label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input
-                                type="password"
-                                id="cadastro-senha"
-                                placeholder="Crie uma senha com pelo menos 8 caracteres"
-                                minlength="8"
-                                maxlength="128"
-                                autocomplete="new-password"
-                                style="width: 100%; padding-right: 42px;"
-                            >
-                            <button
-                                type="button"
-                                class="btn-toggle-senha"
-                                data-alvo="cadastro-senha"
-                                aria-label="Mostrar ou ocultar senha"
-                                aria-pressed="false"
-                                style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: inherit;"
-                            >
-                                <!-- Ícone olho aberto -->
-                                <svg class="icone-olho-aberto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                <!-- Ícone olho fechado (inicia oculto) -->
-                                <svg class="icone-olho-fechado" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
-                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
-                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                </svg>
-                            </button>
-                        </div>
+                    <label for="cadastro-senha">
+                        Nova senha
+                    </label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input
+                            type="password"
+                            id="cadastro-senha"
+                            placeholder="Crie uma senha com pelo menos 8 caracteres"
+                            minlength="8"
+                            maxlength="128"
+                            autocomplete="new-password"
+                            style="width: 100%; padding-right: 42px;"
+                        >
+                        <button
+                            type="button"
+                            class="btn-toggle-senha"
+                            data-alvo="cadastro-senha"
+                            aria-label="Mostrar ou ocultar senha"
+                            aria-pressed="false"
+                            style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: inherit;"
+                        >
+                            <!-- Ícone olho aberto -->
+                            <svg class="icone-olho-aberto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <!-- Ícone olho fechado (inicia oculto) -->
+                            <svg class="icone-olho-fechado" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
                     </div>
+                </div>
 
                 </div>
 
@@ -372,52 +385,7 @@
 
         </section>
 
-<section id="tela-redefinir-senha" class="tela escondida">
-    <div class="topbar">
-        <span class="marca">Controle Escolar</span>
-    </div>
 
-    <div class="conteudo">
-        <h1>Crie uma senha nova</h1>
-        <p class="subtitulo">Escolha uma senha com pelo menos 8 caracteres.</p>
-
-        <div class="campo">
-            <label for="nova-senha">Nova senha</label>
-            <input
-                type="password"
-                id="nova-senha"
-                minlength="8"
-                maxlength="128"
-                autocomplete="new-password"
-                required
-            >
-        </div>
-
-        <div class="campo">
-            <label for="confirmar-nova-senha">Confirme a nova senha</label>
-            <input
-                type="password"
-                id="confirmar-nova-senha"
-                minlength="8"
-                maxlength="128"
-                autocomplete="new-password"
-                required
-            >
-        </div>
-
-        <button id="btn-enviar-nova-senha" class="botao-principal" type="button">
-            Salvar nova senha
-        </button>
-
-        <p id="mensagem-redefinir-senha" class="mensagem" role="status" aria-live="polite"></p>
-
-        <div class="opcoes">
-            <button id="btn-voltar-login-redefinir" class="botao-secundario" type="button">
-                Voltar para o login
-            </button>
-        </div>
-    </div>
-</section>
         <!-- ========================================== -->
         <!-- TELA DE CADASTRO FACIAL -->
         <!-- ========================================== -->
@@ -686,7 +654,7 @@
                     <p><strong>3. Uso da Biometria Facial (Dado Sensível - LGPD):</strong> A imagem facial é utilizada unicamente para validar a identidade no momento do registro de entrada/saída. As imagens são protegidas e não são compartilhadas com terceiros.</p>
                     <p><strong>4. Política de Cookies e Sessão:</strong> Utilizamos cookies técnicos e armazenamento local estritamente necessários para autenticação, proteção contra ataques (CSRF) e memorização do aceite desta política.</p>
                     <p><strong>5. Segurança da Conta:</strong> O aluno é responsável pelo sigilo de sua senha e RA. Em caso de suspeita de acesso indevido, utilize a opção <em>"Esqueceu sua senha?"</em> ou comunique a secretaria da escola.</p>
-                    <p><strong>contato: jubileu@gmail.com</strong></p>
+                    <p><strong>contato:</strong> jubileu@gmail.com</p>
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -698,6 +666,14 @@
         </div>
 
 
-<script src="front-end/script.js"></script>
+        <!-- Biblioteca de Inteligência Artificial para Detecção Real de Rosto -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+    <script src="front-end/script.js"></script>
+
+    </body>
+
+    <script src="front-end/script.js"></script>
+
 </body>
+
 </html>
